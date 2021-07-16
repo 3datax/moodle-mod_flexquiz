@@ -191,15 +191,14 @@ class flex_quiz
       $fqsettings = get_config('mod_flexquiz');
 
       $options = $fqsitem->get_postdata(
-        'dummyId',
         $cycle,
         $this->flexquiz->parentquiz,
         null,
         $time,
-        'newAQCreated'
+        'initialize'
       );
 
-      $url = $fqsettings->aiurl . '/api/v1/danube/return-new-questions';
+      $url = $fqsettings->aiurl . '/api/v1/danube/get-tasks';
       try {
         $questiondata = \mod_flexquiz\curl\curl_request_helper::request_questions($url, $options);
       } catch (moodle_exception $e) {
@@ -209,11 +208,12 @@ class flex_quiz
 
       if ($questiondata) {
         $questions = array_reduce($questiondata, function($carry, $item) use($DB) {
-          if ($item->useInNextQuiz) {
+          if ($item->useInNextTaskGroup) {
               $question = new \stdClass();
-              $question->id = $item->questionId;
-              $question->qtype = $DB->get_field('question', 'qtype', array('id' => $item->questionId), MUST_EXIST);
-              $carry[$item->questionId] = $question;
+              $question->id = $item->taskId;
+              $question->position = $item->position;
+              $question->qtype = $DB->get_field('question', 'qtype', array('id' => $item->taskId), MUST_EXIST);
+              $carry[$item->taskId] = $question;
             };
             return $carry;
         }, array());
@@ -270,7 +270,7 @@ class flex_quiz
         'id' => $newsection->id,
         'parent' => $section->section,
         'visibleold' => true,
-        'collapsed' => true,
+        'collapsed' => true
       );
       $format->update_section_format_options($options);
     } else {
@@ -664,7 +664,7 @@ class flexquiz_student_item
     $childdata = array(
       'quizid' => $quizid,
       'active' => 1,
-      'flexquiz_student_item' => $this->fqsdata->id,
+      'flexquiz_student_item' => $this->fqsdata->id
     );
 
     $newquiz = $DB->insert_record('flexquiz_children', $childdata);
@@ -723,7 +723,7 @@ class flexquiz_student_item
       'password' => '',
       'subnet' => '',
       'browsersecurity' => '-',
-      'delay1' => 0,
+      'delay1' => 0
     );
     $quizid = $DB->insert_record('quiz', $quizdata);
 
@@ -931,6 +931,11 @@ class flexquiz_student_item
   {
     global $DB;
 
+    $positions = array_column($questions, 'position');
+
+    if (!empty($positions)) {
+      array_multisort($positions, SORT_ASC, $questions);
+    }
     $newquiz = $DB->get_record('quiz', array('id' => $quizid), '*', MUST_EXIST);
     $count = 0;
 
@@ -947,7 +952,7 @@ class flexquiz_student_item
       'quizid' => $quizid,
       'firstslot' => 1,
       'heading' => '',
-      'shufflequestions' => 1
+      'shufflequestions' => empty($positions) ? 1 : 0
     ));
     return $count;
   }
@@ -1007,40 +1012,38 @@ class flexquiz_student_item
   /**
    * Creates curl post data to be used for the request to fetch new questions from the ai.
    *
-   * @param string $uniqueid id required by the ai to identify the request.
    * @param int $cyclenumber the number of the cycle the flex quiz is currently in.
-   * @param int $quizid of the quiz which provides the question pool.
-   * @param stdClass[] $questions array of question data from the last quiz attempt.
+   * @param int $parentquizid of the quiz which provides the question pool.
+   * @param stdClass[] $tasks array of question data from the last quiz attempt.
    * @param int $timestamp to be included in the request.
-   * @param int[] $questionpool array of questions eligible for the quiz to be created.
+   * @param int[] $taskpool array of questions eligible for the quiz to be created.
    * Must not be null if $quizid does not provide the question pool.
    * 
    * @return array of postdata to be used in the curl request.
    */
   public function get_postdata(
-    $uniqueid,
     $cyclenumber,
-    $quizid,
-    $questions,
+    $parentquizid,
+    $tasks,
     $timestamp,
-    $eventname,
-    $questionpool = null
+    $type,
+    $taskpool = null
   ) {
 
     // if questionpool is not given, extract the question pool from the parentquiz
-    if (!$questionpool) {
+    if (!$taskpool) {
       global $DB;
-      $questionpool = $DB->get_fieldset_select(
+      $taskpool = $DB->get_fieldset_select(
         'quiz_slots',
         'questionid',
         'quizid=:quizid',
-        array('quizid' => $quizid)
+        array('quizid' => $parentquizid)
       );
     }
 
     // build json object to be sent to the ai api
-    if (!$questions) {
-      $questions = array();
+    if (!$tasks) {
+      $tasks = array();
     }
     $min = intval($this->flexquiz->minquestions);
     $max = intval($this->flexquiz->maxquestions);
@@ -1057,21 +1060,21 @@ class flexquiz_student_item
     );
 
 
-    $quizdata = array(array($eventname => array(
-      'eventId' => $uniqueid,
+    $quizdata = array(array(
+      'type' => $type,
       'courseId' => $this->flexquiz->course,
-      'cycle' => intval($cyclenumber),
-      'quizId' => $quizid,
+      'poolId' => $parentquizid,
       'userId' => $this->studentid,
-      'questions' => $questions,
+      'cycle' => intval($cyclenumber),
+      'tasks' => $tasks,
       'timestamp' => $timestamp,
-      'questionPool' => array_values($questionpool),
-      'minMax' => array('min' => $min, 'max' => $max),
+      'taskPool' => array_values($taskpool),
+      'limits' => array('min' => $min, 'max' => $max),
       'ccar' => intval($this->flexquiz->ccar),
       'roundupCycle' => $isroundupcycle
-    )));
+    ));
 
-    $data = array('uniqueIdentifier' => 'abcde', 'events' => $quizdata);
+    $data = array('uniqueIdentifier' => 'abcde', 'requests' => $quizdata);
 
     $jsondata = json_encode($data);
 
@@ -1121,7 +1124,7 @@ class flexquiz_student_item
     foreach ($questions as $question) {
       array_push($questiondata, array(
         'stashid' => $stashid,
-        'questionid' => $question['questionId'],
+        'questionid' => $question['taskId'],
         'score' => $question['score'],
         'qtype' => $question['qtype']
       ));
@@ -1276,7 +1279,7 @@ class flexquiz_student_item
 
       $oldrecord = $DB->get_record('flexquiz_grades_question', array(
         'flexquiz_student_item' => $this->fqsdata->id,
-        'question' => $question['questionId']
+        'question' => $question['taskId']
       ));
 
       if ($oldrecord) {
@@ -1297,7 +1300,7 @@ class flexquiz_student_item
         $record->ccas_this_cycle = $question['score'] < 1.0 ? 0 : 1;
         $insertdata = array(
           'flexquiz_student_item' => $this->fqsdata->id,
-          'question' => $question['questionId'],
+          'question' => $question['taskId'],
           'attempts' => $record->attempts,
           'fraction' => $record->fraction,
           'rating' => $record->rating,
@@ -1308,7 +1311,7 @@ class flexquiz_student_item
         );
         $DB->insert_record('flexquiz_grades_question', $insertdata);
       }
-      $result[$question['questionId']] = $record;
+      $result[$question['taskId']] = $record;
     }
     $this->update_grade_data($result);
   }
@@ -1330,7 +1333,7 @@ class flexquiz_student_item
     $grade = array(
       'userid' => $this->studentid,
       'datesubmitted' => $time,
-      'dategraded' => $time,
+      'dategraded' => $time
     );
 
     $sql = 'SELECT p.id, sum(p.fraction) AS fractionsum, sum(p.ccas_this_cycle) AS ccasum
@@ -1420,7 +1423,7 @@ class flexquiz_student_item
           'attempts' => $attempts,
           'roundupattempts' => $roundupattempts,
           'roundupfraction' => $roundupfraction,
-          'timemodified' => $time,
+          'timemodified' => $time
         )
       );
     } else {
@@ -1431,7 +1434,7 @@ class flexquiz_student_item
         'roundupattempts' => $roundupcycle ? $count : 0,
         'roundupfraction' => $roundupcycle ? $sumscores / $count : 0.0,
         'timecreated' => $time,
-        'timemodified' => $time,
+        'timemodified' => $time
       ));
     }
   }
@@ -1444,6 +1447,7 @@ class flexquiz_student_item
    * @param int $quizid id of the quiz from which the attempt data is taken.
    * @param stdClass[] $questions array of questions used in quiz attempt from which the data is taken.
    * @param int $time timestamp of the quiz attempt.
+   * @param string $type of the request (e.g. 'initialize', 'continue')
    * @param int[] $questionPool the pool of questions eligible.
    * @param bool $stashonfail true if the data should be stashed in the flexquiz_stash table in case
    * the request fails, false else.
@@ -1456,14 +1460,14 @@ class flexquiz_student_item
     $quizid,
     $questions,
     $time,
-    $eventname,
+    $type,
     $questionpool = [],
     $stashonfail = false
   ) {
 
     global $DB;
     $fqsettings = get_config('mod_flexquiz');
-    $url = $fqsettings->aiurl . '/api/v1/danube/return-new-questions';
+    $url = $fqsettings->aiurl . '/api/v1/danube/get-tasks';
 
     if (empty($questionpool)) {
       $questionpool = $DB->get_fieldset_select(
@@ -1474,12 +1478,11 @@ class flexquiz_student_item
       );
     }
     $options = $this->get_postdata(
-      $uniqueid,
       $cycle,
       $this->flexquiz->parentquiz,
       $questions,
       $time,
-      $eventname,
+      $type,
       $questionpool
     );
 
@@ -1504,11 +1507,12 @@ class flexquiz_student_item
       }
     } else {
       $newquestions = array_reduce($questiondata, function($carry, $item) {
-        if ($item->useInNextQuiz) {
+        if ($item->useInNextTaskGroup) {
             $question = new \stdClass();
-            $question->id = $item->questionId;
+            $question->id = $item->taskId;
+            $question->position = $item->position;
             $question->qtype = $this->gradedata[$question->id]->qtype;
-            $carry[$item->questionId] = $question;
+            $carry[$item->taskId] = $question;
           };
           return $carry;
       }, array());
@@ -1530,7 +1534,7 @@ class flexquiz_student_item
     // if usesai flag is set, have ai determine the questions for the quiz to be created
     if ($this->flexquiz->usesai) {
       $questions = array();
-      $eventname = intval($this->fqsdata->instances) === 0 ? 'newAQCreated' : 'quizAttemptDone';
+      $type = intval($this->fqsdata->instances) === 0 ? 'initialize' : 'continue';
       // use stashed records if they exist
       if ($stashedrecords && !empty($stashedrecords)) {
           foreach ($stashedrecords as $record) {
@@ -1539,9 +1543,9 @@ class flexquiz_student_item
               $stashedquestions = $DB->get_records('flexquiz_stash_questions', array('stashid' => $record->id));
               foreach ($stashedquestions as $question) {
                   array_push($questions, array(
-                      'questionId' => $question->questionid,
-                      'score' => floatval($question->score),
-                      'qtype' => $question->qtype
+                    'taskId' => $question->questionid,
+                    'score' => floatval($question->score),
+                    'qtype' => $question->qtype
                   ));
               }
               $DB->delete_records('flexquiz_stash', array('id' => $record->id));
@@ -1559,7 +1563,7 @@ class flexquiz_student_item
           $quizid,
           $questions,
           $time,
-          $eventname,
+          $type,
           [],
           true
       );
@@ -1605,7 +1609,7 @@ class flexquiz_student_item
         'flexquiz_grades_question',
         array(
           'flexquiz_student_item' => $this->fqsdata->id,
-          'question' => $question->questionId
+          'question' => $question->taskId
         )
       );
 
@@ -1619,7 +1623,7 @@ class flexquiz_student_item
       } else {
         $newdata = array(
           'flexquiz_student_item' => $this->fqsdata->id,
-          'question' => $question->questionId,
+          'question' => $question->taskId,
           'attempts' => 0,
           'rating' => 0.0,
           'fraction' => $grade,
@@ -1630,8 +1634,8 @@ class flexquiz_student_item
         );
         $DB->insert_record('flexquiz_grades_question', $newdata);
       }
-      $this->gradedata[$question->questionId]->timemodified = $time;
-      $this->gradedata[$question->questionId]->fraction = $grade;
+      $this->gradedata[$question->taskId]->timemodified = $time;
+      $this->gradedata[$question->taskId]->fraction = $grade;
     }
   }
 }

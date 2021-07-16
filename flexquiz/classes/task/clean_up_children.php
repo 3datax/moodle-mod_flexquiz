@@ -126,7 +126,7 @@ class clean_up_children extends \core\task\scheduled_task
                         $item->parentquiz,
                         [],
                         $time,
-                        'quizAttemptDone'
+                        'continue'
                     );
                 }
             } else if (!$samecycle) {
@@ -138,7 +138,7 @@ class clean_up_children extends \core\task\scheduled_task
                         $item->parentquiz,
                         [],
                         $time,
-                        'quizAttemptDone'
+                        'continue'
                     );
                 }
             }

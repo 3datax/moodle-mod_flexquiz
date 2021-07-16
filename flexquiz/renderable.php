@@ -132,7 +132,7 @@ class flexquiz_teacher_view implements renderable
                   $flexquiz->parentquiz,
                   [],
                   $time,
-                  'quizAttemptDone'
+                  'continue'
                 );
               }
             } else {
@@ -145,7 +145,7 @@ class flexquiz_teacher_view implements renderable
               $flexquiz->parentquiz,
               [],
               $time,
-              'quizAttemptDone'
+              'continue'
             );
           }
         }
@@ -280,7 +280,7 @@ class flexquiz_student_view implements renderable
                 $flexquiz->parentquiz,
                 [],
                 $time,
-                'quizAttemptDone'
+                'continue'
               );
             }
           } else {
@@ -293,7 +293,7 @@ class flexquiz_student_view implements renderable
             $flexquiz->parentquiz,
             [],
             $time,
-            'quizAttemptDone'
+            'continue'
           );
         }
       }
