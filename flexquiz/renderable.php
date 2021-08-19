@@ -93,13 +93,12 @@ class flexquiz_teacher_view implements renderable
                    u.id AS userid,
                    u.firstname,
                    u.lastname,
-                   u.username,
                    fqs.cyclenumber
             FROM {user} AS u
             LEFT JOIN {flexquiz_student} AS fqs ON fqs.student=u.id
             WHERE u.id $insql
             AND fqs.flexquiz=?
-            ORDER BY u.lastname ASC, u.firstname ASC, u.username ASC
+            ORDER BY u.lastname ASC, u.firstname ASC
     ";
 
     $params = $inparams;

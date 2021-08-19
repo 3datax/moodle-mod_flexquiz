@@ -107,7 +107,6 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                     $tabledata = new stdClass();
                     $tabledata->id = $item->id;
                     $tabledata->name = $item->lastname . ' ' . $item->firstname;
-                    $tabledata->username = $item->username;
                     $tabledata->attemptstotal = $item->attemptstotal;
                     $tabledata->attemptscycle = $item->attemptscycle;
                     $tabledata->percentage = round($item->percentage, 2);
@@ -418,10 +417,9 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
         global $PAGE;
 
         // prepare table structure
-        $columns = array('name', 'username', 'attemptstotal', 'attemptscycle', 'percentage', 'questions');
+        $columns = array('name', 'attemptstotal', 'attemptscycle', 'percentage', 'questions');
         $headers = array(
             get_string('headername', 'flexquiz'),
-            get_string('headerusername', 'flexquiz'),
             get_string('headertotalattempts', 'flexquiz'),
             get_string('headercycleattempts', 'flexquiz'),
             get_string('headeraverage', 'flexquiz'),
@@ -453,7 +451,7 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
             $this->print_questions_table($questiondata, $ccar, $includecca);
             $questions .= ob_get_contents();
             ob_end_clean();
-            $studentrow = [$student->name, $student->username, $student->attemptstotal, $student->attemptscycle, $student->percentage . '%', $questions];
+            $studentrow = [$student->name, $student->attemptstotal, $student->attemptscycle, $student->percentage . '%', $questions];
             $table->column_style('percentage', 'color', $student->percentagecolor);
             $table->add_data($studentrow);
         }

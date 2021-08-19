@@ -31,7 +31,6 @@ use moodle_exception;
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/group/lib.php');
 require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
-require_once($CFG->dirroot . '/mod/flexquiz/classes/curl.php');
 require_once($CFG->dirroot . '/lib/gradelib.php');
 
 defined('MOODLE_INTERNAL') || die();
@@ -113,7 +112,6 @@ class flex_quiz
   public function create_first_children()
   {
     global $DB, $CFG;
-    require_once($CFG->dirroot . '/course/format/flexsections/lib.php');
 
     // get eligible users
     $context = \context_module::instance($this->cm->id);
@@ -188,36 +186,13 @@ class flex_quiz
 
     // if ai is used, get new questions from said ai
     if ($this->flexquiz->usesai) {
-      $fqsettings = get_config('mod_flexquiz');
-
-      $options = $fqsitem->get_postdata(
+      $questions = $fqsitem->get_new_tasks(
         $cycle,
         $this->flexquiz->parentquiz,
         null,
         $time,
         'initialize'
       );
-
-      $url = $fqsettings->aiurl . '/api/v1/danube/get-tasks';
-      try {
-        $questiondata = \mod_flexquiz\curl\curl_request_helper::request_questions($url, $options);
-      } catch (moodle_exception $e) {
-        // AI connection failure should only cancel child quiz creation here, so we do not propagate the exception
-        // in order to prevent a transaction rollback.
-      }
-
-      if ($questiondata) {
-        $questions = array_reduce($questiondata, function($carry, $item) use($DB) {
-          if ($item->useInNextTaskGroup) {
-              $question = new \stdClass();
-              $question->id = $item->taskId;
-              $question->position = $item->position;
-              $question->qtype = $DB->get_field('question', 'qtype', array('id' => $item->taskId), MUST_EXIST);
-              $carry[$item->taskId] = $question;
-            };
-            return $carry;
-        }, array());
-      }
     } else {
       // if no ai is used, randomly choose questions
       $questions = $this->get_random_questions();
@@ -637,13 +612,11 @@ class flexquiz_student_item
     $student = $DB->get_record(
       'user',
       array('id' => $this->studentid),
-      'firstname, lastname, username',
+      'firstname, lastname',
       MUST_EXIST
     );
 
-    $groupname = 'FQ - ' .
-                  $student->firstname . ' ' . $student->lastname .
-                  ' (' . $student->username . ')';
+    $groupname = 'FQ - ' . $student->firstname . ' ' . $student->lastname;
                   
     $this->add_child_group_and_restrictions($groupname, $newmoduleid);
 
@@ -760,6 +733,11 @@ class flexquiz_student_item
         $groupdata = new stdClass();
         $groupdata->courseid = $this->flexquiz->course;
         $groupdata->name = $groupname;
+
+        if ($DB->record_exists('groups', array('name' => $groupname, 'courseid' => $this->flexquiz->course))) {
+          // disambiguation is necessary if there are two students with the same name
+          $groupdata->name .= '_' . time();
+        }
 
         $gid = groups_create_group($groupdata);
       }
@@ -1010,7 +988,8 @@ class flexquiz_student_item
   }
 
   /**
-   * Creates curl post data to be used for the request to fetch new questions from the ai.
+   *
+   * Fetches new questions from the ai.
    *
    * @param int $cyclenumber the number of the cycle the flex quiz is currently in.
    * @param int $parentquizid of the quiz which provides the question pool.
@@ -1019,9 +998,9 @@ class flexquiz_student_item
    * @param int[] $taskpool array of questions eligible for the quiz to be created.
    * Must not be null if $quizid does not provide the question pool.
    * 
-   * @return array of postdata to be used in the curl request.
+   * @return array of questions returned by the AI.
    */
-  public function get_postdata(
+  public function get_new_tasks(
     $cyclenumber,
     $parentquizid,
     $tasks,
@@ -1029,10 +1008,10 @@ class flexquiz_student_item
     $type,
     $taskpool = null
   ) {
+    global $DB;
 
     // if questionpool is not given, extract the question pool from the parentquiz
     if (!$taskpool) {
-      global $DB;
       $taskpool = $DB->get_fieldset_select(
         'quiz_slots',
         'questionid',
@@ -1075,15 +1054,42 @@ class flexquiz_student_item
     ));
 
     $data = array('uniqueIdentifier' => 'abcde', 'requests' => $quizdata);
-
     $jsondata = json_encode($data);
 
     $fqsettings = get_config('mod_flexquiz');
     $apikey = $fqsettings->aiapikey;
-    return array(
-      CURLOPT_HTTPHEADER => array('Content-Type:application/json', 'Authorization:Bearer/' . $apikey),
-      CURLOPT_POSTFIELDS => $jsondata
+    $url = $fqsettings->aiurl . '/api/v1/danube/get-tasks';
+
+    $options = array(
+      'CURLOPT_RETURNTRANSFER' => 1,
+      'CURLOPT_HTTPGET' => 0
     );
+
+    $curl = new \curl();
+    $curl->setHeader('Content-Type:application/json');
+    $curl->setHeader('Authorization:Bearer/' . $apikey);
+    $response = $curl->post($url, $jsondata, $options);
+    $errno = $curl->get_errno();
+    if ($errno) {
+      debugging(get_string('faultyairesponse', 'flexquiz'), DEBUG_DEVELOPER);
+      // AI connection failure should only cancel child quiz creation here, so we do not propagate the exception
+      // in order to prevent a transaction rollback.
+    } else {
+      $questiondata = json_decode($response);
+      $questions = array_reduce($questiondata, function($carry, $item) use($DB) {
+        if ($item->useInNextTaskGroup) {
+            $question = new \stdClass();
+            $question->id = $item->taskId;
+            $question->position = $item->position;
+            $question->qtype = $DB->get_field('question', 'qtype', array('id' => $item->taskId), MUST_EXIST);
+            $question->grade = $item->grade;
+            $carry[$item->taskId] = $question;
+          };
+          return $carry;
+      }, array());
+      return $questions;
+    }
+    return array();
   }
 
   /**
@@ -1336,7 +1342,7 @@ class flexquiz_student_item
       'dategraded' => $time
     );
 
-    $sql = 'SELECT p.id, sum(p.fraction) AS fractionsum, sum(p.ccas_this_cycle) AS ccasum
+    $sql = 'SELECT sum(p.fraction) AS fractionsum, sum(p.ccas_this_cycle) AS ccasum
             FROM {flexquiz_grades_question} AS p
             WHERE p.flexquiz_student_item=?';
     $params = [$this->fqsdata->id];
@@ -1477,7 +1483,7 @@ class flexquiz_student_item
         array('quizid' => $this->flexquiz->parentquiz)
       );
     }
-    $options = $this->get_postdata(
+    $questions = $this->get_new_tasks(
       $cycle,
       $this->flexquiz->parentquiz,
       $questions,
@@ -1486,16 +1492,7 @@ class flexquiz_student_item
       $questionpool
     );
 
-    $questiondata = array();
-    try {
-      $questiondata = \mod_flexquiz\curl\curl_request_helper::request_questions($url, $options);
-    } catch (moodle_exception $e) {
-      // we do not want students to see that the AI failed, so error output 
-      // will only happen on the debug level.
-    }
-
-    $newquestions = array();
-    if (empty($questiondata)) {
+    if (!$questions || empty($questions)) {
       if ($stashonfail) {
         $this->stash_postdata(
           $uniqueid,
@@ -1505,21 +1502,10 @@ class flexquiz_student_item
           $questions
         );
       }
-    } else {
-      $newquestions = array_reduce($questiondata, function($carry, $item) {
-        if ($item->useInNextTaskGroup) {
-            $question = new \stdClass();
-            $question->id = $item->taskId;
-            $question->position = $item->position;
-            $question->qtype = $this->gradedata[$question->id]->qtype;
-            $carry[$item->taskId] = $question;
-          };
-          return $carry;
-      }, array());
     }
 
-    $this->update_ai_grades($questiondata, $time);
-    return $newquestions;
+    $this->update_ai_grades($questions, $time);
+    return $questions;
   }
 
   /**
@@ -1595,21 +1581,21 @@ class flexquiz_student_item
    * Update the grade for a specific flexquiz/student/question combination
    * using ai data.
    *
-   * @param stdClass[] $questiondata containing the question grades sent by the ai.
+   * @param stdClass[] $questions containing the question grades sent by the ai.
    * @param int $time this update was triggered.
    */
-  public function update_ai_grades($questiondata, $time)
+  public function update_ai_grades($questions, $time)
   {
     global $DB;
 
-    foreach ($questiondata as $question) {
+    foreach ($questions as $question) {
       $grade = $question->grade;
 
       $oldrecord = $DB->get_record(
         'flexquiz_grades_question',
         array(
           'flexquiz_student_item' => $this->fqsdata->id,
-          'question' => $question->taskId
+          'question' => $question->id
         )
       );
 
@@ -1623,7 +1609,7 @@ class flexquiz_student_item
       } else {
         $newdata = array(
           'flexquiz_student_item' => $this->fqsdata->id,
-          'question' => $question->taskId,
+          'question' => $question->id,
           'attempts' => 0,
           'rating' => 0.0,
           'fraction' => $grade,
@@ -1634,8 +1620,8 @@ class flexquiz_student_item
         );
         $DB->insert_record('flexquiz_grades_question', $newdata);
       }
-      $this->gradedata[$question->taskId]->timemodified = $time;
-      $this->gradedata[$question->taskId]->fraction = $grade;
+      $this->gradedata[$question->id]->timemodified = $time;
+      $this->gradedata[$question->id]->fraction = $grade;
     }
   }
 }

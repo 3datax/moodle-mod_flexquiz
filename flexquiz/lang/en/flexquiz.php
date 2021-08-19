@@ -72,7 +72,6 @@ $string['headerquestionattempts'] = 'Consecutive correct answers';
 $string['headerquestions'] = 'Performance by question';
 $string['headerstatus'] = 'Status';
 $string['headertotalattempts'] = 'Quizzes attempted';
-$string['headerusername'] = 'Username';
 $string['iteration'] = 'Iteration';
 $string['lastcycle'] = 'Last cycle reached.';
 $string['maxcountreached'] = 'Maximum quiz count reached for this cycle.';
