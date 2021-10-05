@@ -128,7 +128,7 @@ function flexquiz_delete_instance($flexquizid) {
       return $num >= intval($section);
     });
 
-    if ($sectionstoreorder) { 
+    if ($sectionstoreorder && !empty($sectionstoreorder)) {
       list($insql, $params) = $DB->get_in_or_equal($sectionstoreorder, SQL_PARAMS_NAMED);
         $sql = "UPDATE {course_format_options}
                 SET `value` = `value` - 1

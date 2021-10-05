@@ -283,7 +283,7 @@ class flex_quiz
     $params = [$section->id];
     $record = $DB->get_records_sql($sql, $params);
 
-    if ($record) {
+    if ($record && !empty($record)) {
       list($insql, $params) = $DB->get_in_or_equal(array_column($record, 'sectionid'), SQL_PARAMS_NAMED);
       $sql = "SELECT COALESCE(MAX(cs.section), :defaultsectionnum) AS lastsection
               FROM {course_sections} AS cs

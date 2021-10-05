@@ -87,23 +87,27 @@ class flexquiz_teacher_view implements renderable
     // get students data
     $capjoin = get_enrolled_with_capabilities_join($context, '', 'mod/quiz:attempt');
     $students = $DB->get_records_sql("SELECT u.id FROM {user} AS u $capjoin->joins WHERE $capjoin->wheres", $capjoin->params);
-    list($insql, $inparams) = $DB->get_in_or_equal(array_column($students, 'id'), SQL_PARAMS_QM);
-    $sql = "SELECT fqs.id,
-                   fqs.graded,
-                   u.id AS userid,
-                   u.firstname,
-                   u.lastname,
-                   fqs.cyclenumber
-            FROM {user} AS u
-            LEFT JOIN {flexquiz_student} AS fqs ON fqs.student=u.id
-            WHERE u.id $insql
-            AND fqs.flexquiz=?
-            ORDER BY u.lastname ASC, u.firstname ASC
-    ";
 
-    $params = $inparams;
-    array_push($params, $flexquiz->id);
-    $records = $DB->get_records_sql($sql, $params);
+    $records = array();
+    if ($students && !empty($students)) {
+      list($insql, $inparams) = $DB->get_in_or_equal(array_column($students, 'id'), SQL_PARAMS_QM);
+      $sql = "SELECT fqs.id,
+                    fqs.graded,
+                    u.id AS userid,
+                    u.firstname,
+                    u.lastname,
+                    fqs.cyclenumber
+              FROM {user} AS u
+              LEFT JOIN {flexquiz_student} AS fqs ON fqs.student=u.id
+              WHERE u.id $insql
+              AND fqs.flexquiz=?
+              ORDER BY u.lastname ASC, u.firstname ASC
+      ";
+
+      $params = $inparams;
+      array_push($params, $flexquiz->id);
+      $records = $DB->get_records_sql($sql, $params);
+    }
 
     // get question data for students
     $studentrecords = array();

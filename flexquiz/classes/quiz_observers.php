@@ -101,35 +101,38 @@ class quiz_observers
         array('quizid' => $flexquiz->parentquiz)
       );
 
-      // fetch question records from the most recent quiz attempt
-      $likegraded = $DB->sql_like('s.state', ':graded');
-      $likegaveup = $DB->sql_like('s.state', ':gaveup');
-      list($insql, $inparams) = $DB->get_in_or_equal($questionpool, SQL_PARAMS_NAMED);
+      $questionrecords = array();
+      if ($questionpool && !empty($questionpool)) {
+        // fetch question records from the most recent quiz attempt
+        $likegraded = $DB->sql_like('s.state', ':graded');
+        $likegaveup = $DB->sql_like('s.state', ':gaveup');
+        list($insql, $inparams) = $DB->get_in_or_equal($questionpool, SQL_PARAMS_NAMED);
 
-      $sql = "SELECT s.id,
-                  a.questionid,
-                  qs.questionid AS metaid,
-                  q.qtype,
-                  COALESCE(s.fraction, 0) AS fraction
-              FROM {question_attempt_steps} AS s
-              INNER JOIN {question_attempts} AS a ON s.questionattemptid=a.id
-              INNER JOIN {quiz_slots} AS qs ON qs.slot=a.slot
-              INNER JOIN {question} AS q ON q.id=qs.questionid
-              WHERE a.questionusageid=:uniqueid
-              AND qs.quizid=:quizid
-              AND s.userid=:studentid
-              AND ($likegraded OR $likegaveup)
-              AND qs.questionid $insql
-            ";
-      $params = array(
-        'uniqueid' => $uniqueid,
-        'quizid' => $quizid,
-        'studentid' => $studentid,
-        'graded' => '%graded%',
-        'gaveup' => '%gaveup%'
-      );
-      $params += $inparams;
-      $questionrecords = $DB->get_records_sql($sql, $params);
+        $sql = "SELECT s.id,
+                    a.questionid,
+                    qs.questionid AS metaid,
+                    q.qtype,
+                    COALESCE(s.fraction, 0) AS fraction
+                FROM {question_attempt_steps} AS s
+                INNER JOIN {question_attempts} AS a ON s.questionattemptid=a.id
+                INNER JOIN {quiz_slots} AS qs ON qs.slot=a.slot
+                INNER JOIN {question} AS q ON q.id=qs.questionid
+                WHERE a.questionusageid=:uniqueid
+                AND qs.quizid=:quizid
+                AND s.userid=:studentid
+                AND ($likegraded OR $likegaveup)
+                AND qs.questionid $insql
+              ";
+        $params = array(
+          'uniqueid' => $uniqueid,
+          'quizid' => $quizid,
+          'studentid' => $studentid,
+          'graded' => '%graded%',
+          'gaveup' => '%gaveup%'
+        );
+        $params += $inparams;
+        $questionrecords = $DB->get_records_sql($sql, $params);
+      }
 
       $fqs = \mod_flexquiz\child_creation\flexquiz_student_item::create($fqsitem);
       $time = time();

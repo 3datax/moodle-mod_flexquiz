@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2021090100;
+$plugin->version  = 2021100500;
 $plugin->requires = 2019111800;
-$plugin->release = 'v1.0.3';
+$plugin->release = 'v1.0.4';
 $plugin->component = 'mod_flexquiz';
