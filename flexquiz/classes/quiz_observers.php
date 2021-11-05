@@ -186,10 +186,6 @@ class quiz_observers
           $start = $fqs->trigger_transition($currentcycle, $time, 1);
         }
 
-        // update question grading info
-        $fqs->update_question_grades($questions, $time);
-        $updated = true;
-
         // if usesai flag is set, have ai determine the questions for the quiz to be created
         if ($flexquiz->usesai) {
           $newquestions = $fqs->query_questions_from_ai(
@@ -203,7 +199,8 @@ class quiz_observers
             true
           );
         } else {
-          // if no ai is used, have the plugin determine the questions for the next quiz
+          // grading and question selection are done differently in non-AI mode
+          $fqs->update_question_grades($questions, $time);
           $newquestions = $fqs->get_new_questions();
         }
         if ($maxcountreached) {
@@ -216,6 +213,7 @@ class quiz_observers
             $start = intval($flexquiz->startdate) + (($currentcycle + 1) * intval($flexquiz->cycleduration));
           }
         }
+        $updated = true;
       } else {
         // set $last to true to mark the flex quiz as completed for this student
         $last = true;
@@ -243,7 +241,6 @@ class quiz_observers
 
       // if no new quiz creation has been triggered, update grades now
       if (!$updated) {
-        $fqs->update_question_grades($questions, $time);
         if ($flexquiz->usesai) {
           $fqs->query_questions_from_ai(
             $uniqueid,
@@ -255,6 +252,8 @@ class quiz_observers
             $questionpool,
             true
           );
+        } else {
+          $fqs->update_question_grades($questions, $time);
         }
       }
 

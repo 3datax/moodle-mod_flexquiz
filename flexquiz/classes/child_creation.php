@@ -1076,17 +1076,26 @@ class flexquiz_student_item
       // in order to prevent a transaction rollback.
     } else {
       $questiondata = json_decode($response);
-      $questions = array_reduce($questiondata, function($carry, $item) use($DB) {
-        if ($item->useInNextTaskGroup) {
-            $question = new \stdClass();
-            $question->id = $item->taskId;
-            $question->position = $item->position;
-            $question->qtype = $DB->get_field('question', 'qtype', array('id' => $item->taskId), MUST_EXIST);
-            $question->grade = $item->grade;
-            $carry[$item->taskId] = $question;
-          };
-          return $carry;
+      $gradedata = array();
+
+      $questions = array_reduce($questiondata, function($carry, $item) use($DB, &$gradedata) {
+        $question = new \stdClass();
+        $question->id = $item->taskId;
+        $question->position = $item->position;
+        $question->qtype = $DB->get_field('question', 'qtype', array('id' => $item->taskId), MUST_EXIST);
+        $question->grade = $item->grade;
+        array_push($gradedata, $question);
+
+        if ($item->useInNextTaskGroup && $item->useInNextTaskGroup !== 'false') {
+          $carry[$item->taskId] = $question;
+        };
+        return $carry;
       }, array());
+      
+      // grading needs to be done for ALL questions
+      if (!empty($gradedata)) {
+        $this->update_ai_grades($gradedata, $timestamp);
+      }
       return $questions;
     }
     return array();
@@ -1237,7 +1246,11 @@ class flexquiz_student_item
         }
       }
 
-      $record->fraction = 0;
+      // only reset fraction in non-AI mode. grading in AI mode is done by the AI.
+      if (!$this->flexquiz->usesai) {
+        $record->fraction = 0;
+      }
+
       $record->timemodified = $time;
       $DB->update_record('flexquiz_grades_question', $record);
       $result[$record->question] = $record;
@@ -1503,8 +1516,6 @@ class flexquiz_student_item
         );
       }
     }
-
-    $this->update_ai_grades($questions, $time);
     return $questions;
   }
 
