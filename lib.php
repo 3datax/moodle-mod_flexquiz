@@ -130,12 +130,13 @@ function flexquiz_delete_instance($flexquizid) {
 
     if ($sectionstoreorder && !empty($sectionstoreorder)) {
       list($insql, $params) = $DB->get_in_or_equal($sectionstoreorder, SQL_PARAMS_NAMED);
-        $sql = "UPDATE {course_format_options}
-                SET `value` = `value` - 1
-                WHERE `value` $insql
-                AND courseid=:courseid
-                AND `format`='flexsections'
-                AND `name`='parent'   
+        $sql = "UPDATE {course_format_options} as cfo
+                SET cfo.value = cfo.value - 1
+                WHERE cfo.value $insql
+                AND cfo.courseid=:courseid
+                AND cfo.format='flexsections'
+                AND cfo.name='parent'
+                AND cfo.value > 0
       ";
 
       $params += array('courseid' => $flexquiz->course);
