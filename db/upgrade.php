@@ -25,7 +25,7 @@
 
 /**
  * Upgrades database.
- * 
+ *
  * @param stdClass $oldversion old plugin version
  * @return bool true if successful
  */

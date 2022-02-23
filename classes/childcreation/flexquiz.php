@@ -349,11 +349,11 @@ class flexquiz {
      * Get the number of the cycle active at a specific point in time and the info
      * if the end of the flexquiz has been reached.
      *
-     * @param stdClass $fqData object containing cycleduration, startdate and enddate
+     * @param stdClass $fqdata object containing cycleduration, startdate and enddate
      *  from the flexquiz table
      * @param int $time timestamp for which this check should be performed.
      *
-     * @return stdClass $result containing the cyclenumber and the hasended boolean.
+     * @return stdClass object containing the cyclenumber and the hasended boolean.
      */
     public static function get_cycle_info($fqdata, $time) {
         $result = new stdClass();

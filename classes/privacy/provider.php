@@ -528,9 +528,9 @@ class provider implements
     /**
      * Exports flexquiz students.
      *
-     * @param int userid the user's id.
-     * @param stdClass flexquiz flexquiz db object.
-     * @param stdClass flexquizstudent the flexquiz student db object.
+     * @param int $userid the user's id.
+     * @param stdClass $flexquiz flexquiz db object.
+     * @param stdClass $flexquizstudent the flexquiz student db object.
      *
      * @return bool true if successful
      */
@@ -559,8 +559,8 @@ class provider implements
     /**
      * Exports flexquiz child quizzes.
      *
-     * @param int userid the user's id.
-     * @param stdClass flexquiz flexquiz db object.
+     * @param int $userid the user's id.
+     * @param stdClass $flexquiz flexquiz db object.
      *
      * @return bool true if successful
      */
@@ -599,8 +599,8 @@ class provider implements
     /**
      * Exports flexquiz question grades.
      *
-     * @param int userid the user's id.
-     * @param stdClass flexquiz flexquiz db object.
+     * @param int $userid the user's id.
+     * @param stdClass $flexquiz flexquiz db object.
      *
      * @return bool true if successful
      */
@@ -642,8 +642,8 @@ class provider implements
     /**
      * Exports flexquiz stats.
      *
-     * @param int userid the user's id.
-     * @param stdClass flexquiz flexquiz db object.
+     * @param int $userid the user's id.
+     * @param stdClass $flexquiz flexquiz db object.
      *
      * @return bool true if successful
      */

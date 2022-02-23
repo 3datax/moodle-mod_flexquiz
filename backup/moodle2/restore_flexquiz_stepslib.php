@@ -60,8 +60,8 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
 
     /**
      * Processes a flexquiz.
-     * 
-     * @param $data flexquiz data.
+     *
+     * @param object $data flexquiz data.
      */
     protected function process_flexquiz($data) {
         global $DB;
@@ -81,8 +81,8 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
 
     /**
      * Processes a flexquiz student.
-     * 
-     * @param $data flexquiz student data.
+     *
+     * @param object $data flexquiz student data.
      */
     protected function process_flexquiz_student($data) {
         global $DB;
@@ -106,8 +106,8 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
 
     /**
      * Processes flexquiz question grades.
-     * 
-     * @param $data flexquiz question grades data.
+     *
+     * @param object $data flexquiz question grades data.
      */
     protected function process_flexquiz_grades_question($data) {
         global $DB;
@@ -126,8 +126,8 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
 
     /**
      * Processes flexquiz children.
-     * 
-     * @param $data flexquiz children data.
+     *
+     * @param object $data flexquiz children data.
      */
     protected function process_flexquiz_children($data) {
         global $DB;
