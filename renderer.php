@@ -27,12 +27,15 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/tablelib.php');
 
+/**
+ * Flexquiz renderer.
+ */
 class mod_flexquiz_renderer extends plugin_renderer_base {
 
     /**
      * Teacher view renderer for the flexquiz module
      *
-     * @param stdClass $data object to render
+     * @param object $data object to render
      */
     protected function render_flexquiz_teacher_view(object $data) {
         global $CFG;
@@ -160,7 +163,7 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     /**
      * Student view renderer for the flexquiz module
      *
-     * @param stdClass $data object to render
+     * @param object $data object to render
      */
     protected function render_flexquiz_student_view(object $data) {
         global $CFG;
@@ -310,7 +313,7 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     /**
      * Default view renderer for the flexquiz module.
      *
-     * @param stdClass $flexQuiz object to render.
+     * @param object $flexQuiz object to render.
      */
     protected function render_flexquiz_default_view(object $flexquiz) {
         $centerclass = array('class' => 'centered');
@@ -322,7 +325,9 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     /**
      * Returns a rgb color code for a number between 0 and 100 (inclusive).
      *
-     * @param float $number given
+     * @param float $number value between 0 and 100
+     * @param float $opacity opacity value
+     *
      * @return string $rgba
      */
     private function percentage_rgbacode(float $number, float $opacity = 1.0) {

@@ -41,6 +41,7 @@ require_once($CFG->dirroot . '/lib/gradelib.php');
  * @since
  */
 class flexquiz {
+    /** The default value for max question count */
     const MAX_QUESTIONS_DEFAULT = 10;
 
     /** @var stdClass the course_module settings from the database. */
@@ -51,6 +52,8 @@ class flexquiz {
     protected $section;
 
     /**
+     * Constructor.
+     *
      * @param object $flexquiz the row from the flexquiz table.
      * @param object $cm the course_module object for this flexquiz.
      * @param object $section the course_section object for this flexquiz.
@@ -197,11 +200,12 @@ class flexquiz {
 
     /**
      * Creates the section in which to dump the child quizzes for a
-     * specific flexquiz
+     * specific flexquiz.
      *
      * @param stdClass $flexquiz row from the database
-     * @param stdClass $course the flexquiz is in
      * @param stdClass $section the flexquiz is in
+     * @param stdClass $course the flexquiz is in
+     *
      * @return stdClass the newly created section
      */
     public static function create_child_quiz_section($flexquiz, $section = null, $course = null) {
@@ -345,9 +349,9 @@ class flexquiz {
      * Get the number of the cycle active at a specific point in time and the info
      * if the end of the flexquiz has been reached.
      *
+     * @param int $time timestamp for which this check should be performed.
      * @param stdClass $fqData object containing cycleduration, startdate and enddate
      *  from the flexquiz table
-     * @param int $time timestamp for which this check should be performed.
      *
      * @return stdClass $result containing the cyclenumber and the hasended boolean.
      */

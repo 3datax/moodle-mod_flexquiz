@@ -27,6 +27,11 @@
  */
 class backup_flexquiz_activity_structure_step extends backup_activity_structure_step {
 
+    /**
+     * Defines backup structure.
+     *
+     * @return stdClass structure
+     */
     protected function define_structure() {
         // Are we including userinfo?
         $userinfo = $this->get_setting_value('userinfo');
@@ -85,7 +90,7 @@ class backup_flexquiz_activity_structure_step extends backup_activity_structure_
             $children->set_source_table(
                 'flexquiz_children',
                 array('flexquiz_student_item' => backup::VAR_PARENTID),
-                'id ASC',
+                'id ASC'
             );
         }
 

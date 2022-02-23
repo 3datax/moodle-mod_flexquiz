@@ -14,6 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot.'/course/moodleform_mod.php');
+require_once($CFG->dirroot.'/mod/flexquiz/lib.php');
+
 /**
  * Settings form for the flexquiz module.
  *
@@ -22,14 +27,11 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->dirroot.'/course/moodleform_mod.php');
-require_once($CFG->dirroot.'/mod/flexquiz/lib.php');
-
 class mod_flexquiz_mod_form extends moodleform_mod {
 
+    /**
+     * Builds form.
+     */
     public function definition() {
         global $DB, $COURSE;
         $mform =& $this->_form;
@@ -135,7 +137,10 @@ class mod_flexquiz_mod_form extends moodleform_mod {
     }
 
     /**
-     * Backend validation
+     * Backend validation.
+     *
+     * @param array $data data to be validated
+     * @param array $files files to be validated
      */
     public function validation($data, $files) {
         global $DB;

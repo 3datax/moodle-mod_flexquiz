@@ -27,13 +27,23 @@ namespace mod_flexquiz\task;
 
 use moodle_exception;
 
+/**
+ * Task for cleaning up child quizzes.
+ */
 class clean_up_children extends \core\task\scheduled_task {
 
-
+    /**
+     * Gets task name.
+     *
+     * @return string task name
+     */
     public function get_name() {
         return get_string('cleanupchildren', 'flexquiz');
     }
 
+    /**
+     * Runs task.
+     */
     public function execute() {
         global $DB, $CFG;
 

@@ -22,12 +22,11 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
-
 function xmldb_flexquiz_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
 
-    // add db upgrades here 
+    // Add db upgrades here.
 
     return true;
 }

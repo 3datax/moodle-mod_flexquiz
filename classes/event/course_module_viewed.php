@@ -36,7 +36,6 @@ namespace mod_flexquiz\event;
  * @copyright danube.ai
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class course_module_viewed extends \core\event\course_module_viewed {
 
     /**
@@ -48,6 +47,11 @@ class course_module_viewed extends \core\event\course_module_viewed {
         $this->data['objecttable'] = 'flexquiz';
     }
 
+    /**
+     * Gets object id mapping.
+     *
+     * @return array object id mapping
+     */
     public static function get_objectid_mapping() {
         return array('db' => 'flexquiz', 'restore' => 'flexquiz');
     }

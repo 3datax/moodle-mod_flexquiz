@@ -29,9 +29,10 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->libdir . '/questionlib.php');
 
+/**
+ * Quiz observers for Flexquiz.
+ */
 class quiz_observers {
-
-
     /**
      * Static function which submits event data the ai, if usesai flag is set in the
      * specific context, and triggers the creation of a new child quiz.
@@ -55,7 +56,7 @@ class quiz_observers {
             WHERE q.id=:quizid
             AND qas.state='complete'
             ORDER BY qas.id DESC
-    ";
+        ";
         $params = array('quizid' => $quizid);
 
         // Get completion order.

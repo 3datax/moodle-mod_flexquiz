@@ -49,6 +49,8 @@ class backup_flexquiz_activity_task extends backup_activity_task {
 
     /**
      * Encoding rules for flexquiz links.
+     *
+     * @param string $content content to encode.
      */
     public static function encode_content_links($content) {
         global $CFG;

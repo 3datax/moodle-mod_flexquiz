@@ -176,6 +176,8 @@ function flexquiz_view($flexquiz, $course, $cm, $context) {
 }
 
 /**
+ * Checks if moodle supports feature.
+ *
  * @param string $feature FEATURE_xx constant for requested feature
  * @return mixed True if module supports feature, null if doesn't know
  */

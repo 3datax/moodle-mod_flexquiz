@@ -49,6 +49,8 @@ class restore_flexquiz_activity_task extends restore_activity_task {
 
     /**
      * Decoding rules for flexquiz content
+     *
+     * @return array contents
      */
     public static function define_decode_contents() {
         $contents = array();
@@ -60,6 +62,8 @@ class restore_flexquiz_activity_task extends restore_activity_task {
 
     /**
      * Decoding rules for flexquiz links
+     *
+     * @return array contents
      */
     public static function define_decode_rules() {
         $rules = array();
@@ -72,9 +76,9 @@ class restore_flexquiz_activity_task extends restore_activity_task {
 
     /**
      * Define the restore log rules that will be applied
-     * by the {@link restore_logs_processor} when restoring
+     * by the restore logs processor when restoring
      * flexquiz logs. It must return one array
-     * of {@link restore_log_rule} objects
+     * of restore log rule objects
      */
     public static function define_restore_log_rules() {
         $rules = array();
@@ -88,9 +92,9 @@ class restore_flexquiz_activity_task extends restore_activity_task {
 
     /**
      * Define the restore log rules that will be applied
-     * by the {@link restore_logs_processor} when restoring
+     * by the restore logs processor when restoring
      * course logs. It must return one array
-     * of {@link restore_log_rule} objects
+     * of restore log rule objects
      *
      * Note this rules are applied when restoring course logs
      * by the restore final task, but are defined here at
@@ -104,6 +108,9 @@ class restore_flexquiz_activity_task extends restore_activity_task {
         return $rules;
     }
 
+    /**
+     * Run after restore.
+     */
     public function after_restore() {
         global $DB;
 

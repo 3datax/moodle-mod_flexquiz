@@ -14,6 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Flexquiz privacy provider.
+ *
+ * @package mod_flexquiz
+ * @copyright danube.ai
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ */
+
 namespace mod_flexquiz\privacy;
 
 use core_privacy\manager;
@@ -459,7 +468,7 @@ class provider implements
     /**
      * Export all user data for the specified user, in the specified contexts.
      *
-     * @param   approved_contextlist    $contextlist    The approved contexts to export information for.
+     * @param approved_contextlist $contextlist The approved contexts to export information for.
      */
     public static function export_user_data(approved_contextlist $contextlist) {
         global $DB;
@@ -516,6 +525,13 @@ class provider implements
         $flexquizzes->close();
     }
 
+    /**
+     * Exports flexquiz students.
+     *
+     * @param int userid the user's id.
+     * @param stdClass flexquiz flexquiz db object.
+     * @param stdClass flexquizstudent the flexquiz student db object.
+     */
     protected static function export_flexquiz_student(int $userid, \stdClass $flexquiz, \stdClass $flexquizstudent) {
         global $DB;
 
@@ -538,6 +554,12 @@ class provider implements
         return false;
     }
 
+    /**
+     * Exports flexquiz child quizzes.
+     *
+     * @param int userid the user's id.
+     * @param stdClass flexquiz flexquiz db object.
+     */
     protected static function export_flexquiz_children(int $userid, \stdClass $flexquiz) {
         global $DB;
 
@@ -570,6 +592,12 @@ class provider implements
         return true;
     }
 
+    /**
+     * Exports flexquiz question grades.
+     *
+     * @param int userid the user's id.
+     * @param stdClass flexquiz flexquiz db object.
+     */
     protected static function export_flexquiz_grades_question(int $userid, \stdClass $flexquiz) {
         global $DB;
 
@@ -605,6 +633,12 @@ class provider implements
         return true;
     }
 
+    /**
+     * Exports flexquiz stats.
+     *
+     * @param int userid the user's id.
+     * @param stdClass flexquiz flexquiz db object.
+     */
     protected static function export_flexquiz_stats(int $userid, \stdClass $flexquiz) {
         global $DB;
 

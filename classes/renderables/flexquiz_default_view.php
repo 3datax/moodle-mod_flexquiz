@@ -31,6 +31,9 @@ namespace mod_flexquiz\renderables;
  */
 class flexquiz_default_view implements \renderable {
 
+    /**
+     * Constructor for renderable.
+     */
     public function __construct() {
     }
 }

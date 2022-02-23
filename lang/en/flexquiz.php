@@ -18,8 +18,8 @@
  * Default/english language file used by the flexquiz module.
  *
  * @package mod_flexquiz
- * @copyright
- * @license
+ * @copyright danube.ai
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
 

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Course observers of the flexquiz module
+ * Course observers of the flexquiz module.
  *
  * @package mod_flexquiz
  * @copyright danube.ai
@@ -24,6 +24,9 @@
 
 namespace mod_flexquiz\observers;
 
+/**
+ * Course observers for Flexquiz.
+ */
 class course_observers {
     /**
      * Static function which deletes all recently completed quizzes and updates

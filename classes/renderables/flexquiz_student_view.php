@@ -55,8 +55,10 @@ class flexquiz_student_view implements \renderable {
     public $ccar;
 
     /**
+     * Constructor for renderable.
      *
      * @param object $data for the flex quiz
+     * @param string $currenttab current tab
      */
     public function __construct($data, $currenttab) {
         global $DB, $USER;

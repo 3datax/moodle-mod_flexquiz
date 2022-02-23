@@ -49,8 +49,11 @@ class flexquiz_teacher_view implements \renderable {
     public $ccar;
 
     /**
+     * Constructor for renderable.
      *
      * @param object $data for the flex quiz
+     * @param string $currenttab current tab
+     * @param array $context list of context path
      */
     public function __construct($data, $currenttab, $context) {
         global $DB;

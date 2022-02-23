@@ -27,6 +27,11 @@
  */
 class restore_flexquiz_activity_structure_step extends restore_activity_structure_step {
 
+    /**
+     * Defines backup structure.
+     *
+     * @return stdClass structure
+     */
     protected function define_structure() {
 
         $paths = array();
@@ -53,6 +58,9 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
         return $this->prepare_activity_structure($paths);
     }
 
+    /**
+     * Processes a flexquiz.
+     */
     protected function process_flexquiz($data) {
         global $DB;
 
@@ -69,6 +77,9 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
         $this->apply_activity_instance($newitemid);
     }
 
+    /**
+     * Processes a flexquiz student.
+     */
     protected function process_flexquiz_student($data) {
         global $DB;
 
@@ -89,6 +100,9 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
         }
     }
 
+    /**
+     * Processes flexquiz question grades.
+     */
     protected function process_flexquiz_grades_question($data) {
         global $DB;
 
@@ -104,6 +118,9 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
         }
     }
 
+    /**
+     * Processes flexquiz children.
+     */
     protected function process_flexquiz_children($data) {
         global $DB;
 
@@ -121,6 +138,9 @@ class restore_flexquiz_activity_structure_step extends restore_activity_structur
         }
     }
 
+    /**
+     * Run after execution.
+     */
     protected function after_execute() {
         $this->add_related_files('mod_flexquiz', 'intro', null);
     }

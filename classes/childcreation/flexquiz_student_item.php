@@ -41,8 +41,9 @@ require_once($CFG->dirroot . '/lib/gradelib.php');
  * @since
  */
 class flexquiz_student_item {
-
+    /** The penalty on cycle change */
     const NEW_CYCLE_PENALTY = 0.5;
+    /** A factor to calculate grades */
     const GRADE_MULTIPLIER = 10;
 
     /** @var stdClass the flexquiz to which this child quiz belongs. */
@@ -58,6 +59,7 @@ class flexquiz_student_item {
     protected $fqsdata;
 
     /**
+     * Constructor.
      *
      * @param stdClass $flexquiz the row from the flexquiz table.
      * @param stdClass[] $gradedata the questions pool including performance data
@@ -76,6 +78,7 @@ class flexquiz_student_item {
      * Static function to create a new flexquiz_student_item object for a specific user.
      *
      * @param stdClass|int $fqsitemorid the row from the flexquiz_student table or its id.
+     *
      * @return stdClass $fqsitem the new flexquiz_student_item object.
      */
     public static function create($fqsitemorid) {
@@ -321,7 +324,6 @@ class flexquiz_student_item {
      *
      * @param string $groupname name of the group to be created.
      * @param int $newmoduleid id of the newly created module to which the restrictions will be added.
-     * @param stdClass $fqsitem object holding information from the flexquiz_student table.
      */
     private function add_child_group_and_restrictions($groupname, $newmoduleid) {
         global $DB;
@@ -601,6 +603,7 @@ class flexquiz_student_item {
      * @param int $parentquizid of the quiz which provides the question pool.
      * @param stdClass[] $tasks array of question data from the last quiz attempt.
      * @param int $timestamp to be included in the request.
+     * @param string $type of the request (e.g. 'initialize', 'continue')
      * @param int[] $taskpool array of questions eligible for the quiz to be created.
      * Must not be null if $quizid does not provide the question pool.
      *
@@ -1009,7 +1012,7 @@ class flexquiz_student_item {
      *
      * @param int $cycle of which the child quiz attempted was part
      * @param int $count number of new questions attempts submitted
-     * @param float $sumsscores sum of scores over all new question attempts
+     * @param float $sumscores sum of scores over all new question attempts
      * @param int $time this update was triggered.
      */
     public function update_stats($cycle, $count, $sumscores, $time) {
@@ -1068,7 +1071,7 @@ class flexquiz_student_item {
      * @param bool $stashonfail true if the data should be stashed in the flexquiz_stash table in case
      * the request fails, false else.
      *
-     * @return stdClass[] $newquestions array of question objects
+     * @return stdClass[] array of question objects
      */
     public function query_questions_from_ai(
         $uniqueid,
@@ -1080,7 +1083,6 @@ class flexquiz_student_item {
         $questionpool = [],
         $stashonfail = false
     ) {
-
         global $DB;
         $fqsettings = get_config('mod_flexquiz');
         $url = $fqsettings->aiurl . '/api/v1/danube/get-tasks';
@@ -1171,7 +1173,7 @@ class flexquiz_student_item {
             $section = $DB->get_record(
                 'course_sections',
                 array('id' => $this->flexquiz->sectionid),
-                '*',
+                '*'
             );
             if (!$DB->record_exists('course_sections', array('id' => $section->id))) {
                 $flexquiz = $DB->get_record('flexquiz', array('id' => $this->flexquiz->id));
