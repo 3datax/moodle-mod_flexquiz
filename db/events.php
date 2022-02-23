@@ -28,18 +28,18 @@ defined('MOODLE_INTERNAL') || die();
 $observers = array(
     array(
         'eventname' => '\mod_quiz\event\attempt_submitted',
-        'callback' => '\mod_flexquiz\quiz_observers::handle_quiz_completion'
+        'callback' => '\mod_flexquiz\observers\quiz_observers::handle_quiz_completion'
     ),
     array(
         'eventname' => '\core\event\course_viewed',
-        'callback' => '\mod_flexquiz\course_observers::delete_completed_quizzes'
+        'callback' => '\mod_flexquiz\observers\course_observers::delete_completed_quizzes'
     ),
     array(
         'eventname' => '\core\event\role_assigned',
-        'callback' => '\mod_flexquiz\course_observers::handle_user_enrolment'
+        'callback' => '\mod_flexquiz\observers\course_observers::handle_user_enrolment'
     ),
     array(
         'eventname' => '\core\event\role_unassigned',
-        'callback' => '\mod_flexquiz\course_observers::handle_user_unenrolment'
+        'callback' => '\mod_flexquiz\observers\course_observers::handle_user_unenrolment'
     )
 );

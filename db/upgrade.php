@@ -23,8 +23,7 @@
  *
  */
 
-function xmldb_flexquiz_upgrade($oldversion)
-{
+function xmldb_flexquiz_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
 

@@ -25,10 +25,11 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/flexquiz/lib.php');
-require_once($CFG->dirroot . '/mod/flexquiz/classes/child_creation.php');
-require_once($CFG->dirroot . '/mod/flexquiz/renderable.php');
+require_once($CFG->dirroot . '/mod/flexquiz/classes/renderables/flexquiz_default_view.php');
+require_once($CFG->dirroot . '/mod/flexquiz/classes/renderables/flexquiz_teacher_view.php');
+require_once($CFG->dirroot . '/mod/flexquiz/classes/renderables/flexquiz_student_view.php');
 
-$id = optional_param('id', 0, PARAM_INT); // Course Module ID
+$id = optional_param('id', 0, PARAM_INT); // Course Module ID.
 $tab = optional_param('tab', 'general', PARAM_ALPHAEXT);
 
 list ($course, $cm) = get_course_and_cm_from_cmid($id, 'flexquiz');
@@ -46,14 +47,14 @@ $data = new stdClass();
 $data->cm = $cm;
 $data->flexquiz = $DB->get_record('flexquiz', array('id' => $cm->instance), '*', MUST_EXIST);
 
-$widget = new flexquiz_default_view();
+$widget = new \mod_flexquiz\renderables\flexquiz_default_view();
 
 if (has_capability('moodle/course:manageactivities', $context, $USER)) {
-    $widget = new flexquiz_teacher_view($data, $tab, $context);
+    $widget = new \mod_flexquiz\renderables\flexquiz_teacher_view($data, $tab, $context);
 } else {
     $capjoin = get_enrolled_with_capabilities_join($context, '', 'mod/quiz:attempt');
     $sql = "SELECT u.id
-            FROM {user} AS u
+            FROM {user} u
             $capjoin->joins
             WHERE $capjoin->wheres
             AND u.id=:userid";
@@ -62,9 +63,11 @@ if (has_capability('moodle/course:manageactivities', $context, $USER)) {
     $isstudent = $DB->record_exists_sql($sql, $params);
 
     if ($isstudent) {
-        $widget = new flexquiz_student_view($data, $tab);
+        $widget = new \mod_flexquiz\renderables\flexquiz_student_view($data, $tab);
     }
 }
+
+flexquiz_view($data->flexquiz, $course, $cm, $context);
 
 $output = $PAGE->get_renderer('mod_flexquiz');
 echo $output->header();

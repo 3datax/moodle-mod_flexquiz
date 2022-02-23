@@ -25,32 +25,28 @@
 
 namespace mod_flexquiz\task;
 
-require_once($CFG->dirroot . '/mod/flexquiz/classes/child_creation.php');
-
 use moodle_exception;
 
-class clean_up_children extends \core\task\scheduled_task
-{
+class clean_up_children extends \core\task\scheduled_task {
 
-    public function get_name()
-    {
+
+    public function get_name() {
         return get_string('cleanupchildren', 'flexquiz');
     }
 
-    public function execute()
-    {
+    public function execute() {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/course/lib.php');
         require_once($CFG->dirroot . '/lib/gradelib.php');
 
-        // find fqs items with active children
+        // Find fqs items with active children.
         $sql = "SELECT ac.id,
                        ac.flexquiz_student_item AS fqsitem,
                        a.enddate
-                FROM {flexquiz_children} AS ac
-                INNER JOIN {flexquiz_student} AS fqs ON ac.flexquiz_student_item=fqs.id
-                INNER JOIN {flexquiz} AS a ON fqs.flexquiz=a.id
+                FROM {flexquiz_children} ac
+                INNER JOIN {flexquiz_student} fqs ON ac.flexquiz_student_item=fqs.id
+                INNER JOIN {flexquiz} a ON fqs.flexquiz=a.id
                 WHERE ac.active=?
                 ORDER BY ac.id ASC";
         $params = array(1);
@@ -60,7 +56,7 @@ class clean_up_children extends \core\task\scheduled_task
 
         $time = time();
 
-        // get all flex quiz student items
+        // Get all flex quiz student items.
         $sql = "SELECT fqs.id,
                        fqs.cyclenumber,
                        fqs.student,
@@ -72,40 +68,40 @@ class clean_up_children extends \core\task\scheduled_task
                        a.usesai,
                        a.parentquiz,
                        a.sectionid
-                FROM {flexquiz_student} AS fqs
-                INNER JOIN {flexquiz} AS a ON a.id=fqs.flexquiz
+                FROM {flexquiz_student} fqs
+                INNER JOIN {flexquiz} a ON a.id=fqs.flexquiz
                 WHERE fqs.graded=:graded
         ";
         $params = array('graded' => '0');
         $fqs = $DB->get_records_sql($sql, $params);
 
-        // create a new child quiz if necessary
+        // Create a new child quiz if necessary.
         foreach ($fqs as $item) {
-            // check if end reached or cycle transition necessary
+            // Check if end reached or cycle transition necessary.
             $cyclenumber = intval($item->cyclenumber);
-            $cycleinfo = \mod_flexquiz\child_creation\flex_quiz::get_cycle_info($item, $time);
+            $cycleinfo = \mod_flexquiz\childcreation\flexquiz::get_cycle_info($item, $time);
             $currentcycle = intval($cycleinfo->cyclenumber);
             $hasended = $cycleinfo->hasended;
             $isnewcycle = boolval($currentcycle > $cyclenumber);
 
-            $fqs = \mod_flexquiz\child_creation\flexquiz_student_item::create($item->id);
+            $fqs = \mod_flexquiz\childcreation\flexquiz_student_item::create($item->id);
 
             $transaction = $DB->start_delegated_transaction();
 
-            // only continue if there is enough time left before the end date
+            // Only continue if there is enough time left before the end date.
             if (!$hasended) {
                 $hasactivechildren = boolval(in_array($item->id, $activechildren));
-                // trigger cycle transition if necessary
-                if($isnewcycle) {
+                // Trigger cycle transition if necessary.
+                if ($isnewcycle) {
                     $fqs->trigger_transition($currentcycle, $time);
                 }
 
-                // only continue if the fqs item does not have active children
+                // Only continue if the fqs item does not have active children.
                 if (!$hasactivechildren) {
                     if ($item->usesai) {
                         $stashedrecords = $DB->get_records('flexquiz_stash', array('flexquiz_student_item' => $item->id));
                     }
-                    // only continue if a new child quiz is due
+                    // Only continue if a new child quiz is due.
                     if ($isnewcycle || (isset($stashedrecords) && !empty($stashedrecords)) || intval($item->instances) === 0) {
                         try {
                             $fqs->trigger_child_creation($time, $stashedrecords);
@@ -114,6 +110,7 @@ class clean_up_children extends \core\task\scheduled_task
                             try {
                                 $transaction->rollback($e);
                             } catch (moodle_exception $e) {
+                                mtrace($e->errorcode);
                                 // Catch the re-thrown exception.
                             }
                             continue;

@@ -22,13 +22,21 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
- 
+
 defined('MOODLE_INTERNAL') || die();
-      
+
 $inactive = array($currenttab);
 $activated = array($currenttab);
-$row[]  = new tabobject('general', new moodle_url('/mod/flexquiz/view.php', array('id' => $data->id, 'tab' => "'general'")), get_string('generaltab', 'flexquiz'));
-$row[]  = new tabobject('performance', new moodle_url('/mod/flexquiz/view.php', array('id' => $data->id, 'tab' => "'performance'")), get_string('performancetab', 'flexquiz'));
+$row[]  = new tabobject(
+    'general',
+    new moodle_url('/mod/flexquiz/view.php', array('id' => $data->id, 'tab' => "'general'")),
+    get_string('generaltab', 'flexquiz')
+);
+$row[]  = new tabobject(
+    'performance',
+    new moodle_url('/mod/flexquiz/view.php', array('id' => $data->id, 'tab' => "'performance'")),
+    get_string('performancetab', 'flexquiz')
+);
 $tabs[] = $row;
 
 print_tabs($tabs, $currenttab, $inactive, $activated);

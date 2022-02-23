@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * flexquiz module.
+ * Default renderable object for the flexquiz module.
  *
  * @package mod_flexquiz
  * @copyright danube.ai
@@ -23,14 +23,14 @@
  *
  */
 
-require_once("../../config.php");
+namespace mod_flexquiz\renderables;
 
-$id = required_param('id', PARAM_INT); // Course ID.
+/**
+ * The default view object for flex quizzes
+ *
+ */
+class flexquiz_default_view implements \renderable {
 
-$course = $DB->get_record('course', array('id' => $id));
-
-// Ensure that the course specified is valid.
-if (!$course) {
-    throw new moodle_exception('Course ID is incorrect');
+    public function __construct() {
+    }
 }
-require_login($course);

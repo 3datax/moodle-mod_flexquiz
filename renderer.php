@@ -22,22 +22,22 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
- 
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/tablelib.php');
- 
+
 class mod_flexquiz_renderer extends plugin_renderer_base {
- 
+
     /**
      * Teacher view renderer for the flexquiz module
-     * 
+     *
      * @param stdClass $data object to render
      */
     protected function render_flexquiz_teacher_view(object $data) {
         global $CFG;
-        
-        // process data
+
+        // Process data.
         $flexquiz = $data->flexquiz;
         $dateformat = get_string('dateformat', 'flexquiz');
         $start = $flexquiz->startdate;
@@ -47,13 +47,13 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
 
         $startdate = date($dateformat, intval($start));
         $enddate = date($dateformat, intval($end));
-        // prepare ccs for centered elements
+        // Prepare ccs for centered elements.
         $centerclass = array('class' => 'centered');
 
-        // add heading
+        // Add heading.
         $out = $this->output->heading(html_writer::tag('h1', $flexquiz->name, array('class' => 'header')));
 
-        // add tabs
+        // Add tabs.
         if (!empty($currenttab)) {
             ob_start();
             include($CFG->dirroot.'/mod/flexquiz/classes/view/tabs.php');
@@ -61,14 +61,18 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
             ob_end_clean();
         }
 
-        // add content
+        // Add content.
         switch($currenttab) {
             case 'general':
-                // add start and end dates
-                $out .= $this->output->container(html_writer::tag('div', get_string('startedat', 'flexquiz', $startdate), $centerclass));
-                
+                // Add start and end dates.
+                $out .= $this->output->container(
+                    html_writer::tag('div', get_string('startedat', 'flexquiz', $startdate), $centerclass)
+                );
+
                 if ($end) {
-                    $out  .= $this->output->container(html_writer::tag('div', get_string('endsat', 'flexquiz', $enddate), $centerclass));
+                    $out .= $this->output->container(
+                        html_writer::tag('div', get_string('endsat', 'flexquiz', $enddate), $centerclass)
+                    );
                 }
                 if ($data->flexquiz->cycleduration) {
                     if ($data->currentcycle) {
@@ -86,24 +90,29 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                         );
                     }
                 }
-                // add back button
+                // Add back button.
                 $url = new moodle_url('/course/view.php', array('id' => $courseid));
-                $backbutton = $this->single_button($url, get_string('backtocourse', 'flexquiz'), 'get', array('class' => 'continuebutton'));
+                $backbutton = $this->single_button(
+                    $url,
+                    get_string('backtocourse', 'flexquiz'),
+                    'get',
+                    array('class' => 'continuebutton')
+                );
                 $out .= $this->box($backbutton);
 
-                // output everything
+                // Output everything.
                 echo $this->output->container($out, 'teacher view');
 
                 break;
             case 'performance':
-                // output the above
+                // Output the above.
                 echo $this->output->container($out, 'teacher view');
 
-                // add table
-                // prepare table contents
+                // Add table.
+                // Prepare table contents.
                 $studentdata = array();
                 $ccar = $data->ccar;
-                foreach($data->studentrecords as $item) {
+                foreach ($data->studentrecords as $item) {
                     $tabledata = new stdClass();
                     $tabledata->id = $item->id;
                     $tabledata->name = $item->lastname . ' ' . $item->firstname;
@@ -112,10 +121,10 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                     $tabledata->percentage = round($item->percentage, 2);
                     $tabledata->percentagecolor = $this->percentage_rgbacode($tabledata->percentage);
 
-                    // prepare questions tables contents
+                    // Prepare questions tables contents.
                     $questiondata = array();
                     $count = 1;
-                    foreach($item->questiongrades as $grade) {
+                    foreach ($item->questiongrades as $grade) {
                         $subtabledata = new stdClass();
                         $subtabledata->id = $grade->question;
                         $subtabledata->qtype = $grade->qtype;
@@ -130,16 +139,16 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                             $subtabledata->standing = round(($subtabledata->correctattempts / $ccar) * 100, 2);
                         }
                         $subtabledata->percentagecolor = $this->percentage_rgbacode($subtabledata->standing);
-                        // add question data to questions table
+                        // Add question data to questions table.
                         array_push($questiondata, $subtabledata);
                         $count++;
                     }
-                    // add student data to students table
+                    // Add student data to students table.
                     $tabledata->questiondata = $questiondata;
                     array_push($studentdata, $tabledata);
                 }
 
-                //print table
+                // Print table.
                 $this->print_students_table($studentdata, $ccar, $includecca);
 
                 break;
@@ -150,36 +159,36 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
 
     /**
      * Student view renderer for the flexquiz module
-     * 
+     *
      * @param stdClass $data object to render
      */
     protected function render_flexquiz_student_view(object $data) {
         global $CFG;
 
-        // process data
+        // Process data.
         $currenttab = $data->currenttab;
         $ccar = $data->ccar;
 
-        // prepare ccs for centered elements
+        // Prepare ccs for centered elements.
         $centerclass = array('class' => 'centered');
 
-        // add heading
+        // Add heading.
         $out = $this->output->heading(html_writer::tag('h1', $data->flexquiz->name, array('class' => 'header')));
 
-        // add tabs
+        // Add tabs.
         if (!empty($currenttab)) {
             ob_start();
             include($CFG->dirroot.'/mod/flexquiz/classes/view/tabs.php');
             $out .= ob_get_contents();
             ob_end_clean();
         }
-        
-        // add content
+
+        // Add content.
         switch($currenttab) {
             case 'general':
                 $out .= $this->output->box_start();
 
-                // add current average
+                // Add current average.
                 $standing = $data->currentstanding;
                 $color = $this->percentage_rgbacode($standing);
                 $out .= html_writer::tag(
@@ -190,7 +199,7 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                             html_writer::tag(
                                 'span',
                                 strval(round($standing, 2)) . '%',
-                                array('style' => "color: $color; font-weight: bold", 'font-weight' =>  'bold')
+                                array('style' => "color: $color; font-weight: bold", 'font-weight' => 'bold')
                             )
                         )
                     ),
@@ -203,7 +212,7 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                         $ccasleft = get_string('maxcountreached', 'flexquiz');
                     } else if ($data->ccasleft > 0 ) {
                         if ($data->flexquiz->usesai) {
-                            if ($data->ccasleft > 0) { 
+                            if ($data->ccasleft > 0) {
                                 $ccasleft = get_string('approximately', 'flexquiz', strval($data->ccasleft));
                             } else {
                                 $ccasleft = get_string('fewccasleft', 'flexquiz', strval($data->ccasleft));
@@ -213,14 +222,14 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                         }
                     }
 
-                    // add attempts this cycle left info
+                    // Add attempts this cycle left info.
                     $out .= html_writer::tag(
                         'div',
                         html_writer::tag('span', $ccasleft),
                         $centerclass
                     );
                 }
-                // add currently active quiz or information about the next quiz
+                // Add currently active quiz or information about the next quiz.
                 if ($data->quizdata) {
                     $out .= html_writer::tag(
                         'div',
@@ -260,17 +269,17 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                 }
                 $out .= $this->output->box_end();
 
-                // output everything
+                // Output everything.
                 echo $this->output->container($out, 'student view');
                 break;
             case 'performance':
-                // output the above
+                // Output the above.
                 echo $this->output->container($out, 'student view');
-                
-                // prepare table contents
+
+                // Prepare table contents.
                 $questiondata = array();
                 $count = 1;
-                foreach($data->questiongrades as $item) {
+                foreach ($data->questiongrades as $item) {
                     $tabledata = new stdClass();
                     $tabledata->id = $item->question;
                     $tabledata->qtype = $item->qtype;
@@ -288,10 +297,10 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                     array_push($questiondata, $tabledata);
                     $count++;
                 }
-                
-                // print table
+
+                // Print table.
                 $this->print_questions_table($questiondata, $ccar, $includecca);
-                
+
                 break;
             default:
                 break;
@@ -299,9 +308,9 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     }
 
     /**
-     * Default view renderer for the flexquiz module
-     * 
-     * @param stdClass $flexQuiz object to render
+     * Default view renderer for the flexquiz module.
+     *
+     * @param stdClass $flexQuiz object to render.
      */
     protected function render_flexquiz_default_view(object $flexquiz) {
         $centerclass = array('class' => 'centered');
@@ -311,14 +320,15 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     }
 
     /**
-     * Returns a rgb color code for a number between 0 and 100 (inclusive)
-     * 
+     * Returns a rgb color code for a number between 0 and 100 (inclusive).
+     *
      * @param float $number given
      * @return string $rgba
      */
     private function percentage_rgbacode(float $number, float $opacity = 1.0) {
         if ($number < 0 || $number > 100) {
-            print_error('Percentages need to be within range [0 100]');
+            $rgba = "rgba(0, 0, 0, $opacity)";
+            return $rgba;
         }
 
         $bluevalue = 0;
@@ -336,21 +346,19 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
             $redvalue = 0;
         }
         $rgba = "rgba($redvalue, $greenvalue, $bluevalue, $opacity)";
-        
+
         return $rgba;
     }
 
     /**
-     * Prints the questions overview table
-     * 
-     * @param stdClass[] $questiondata data to fill the table with
-     * @param int $ccar consecutive correct answers required setting from the flexquiz table
-     * @param bool $includecca true if cca info shall be included in the questions table
+     * Prints the questions overview table.
+     *
+     * @param stdClass[] $questiondata data to fill the table with.
+     * @param int $ccar consecutive correct answers required setting from the flexquiz table.
+     * @param bool $includecca true if cca info shall be included in the questions table.
      */
     private function print_questions_table(array $questiondata, int $ccar, bool $includecca) {
-        global $PAGE, $OUTPUT;
-
-        // prepare table structure
+        // Prepare table structure.
         $columns = array('question', 'percentage');
         $headers = array(get_string('headerquestion', 'flexquiz'), get_string('headerpercentage', 'flexquiz'));
         if ($includecca) {
@@ -360,23 +368,23 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
         array_push($columns, 'status');
         array_push($headers, get_string('headerstatus', 'flexquiz'));
 
-        // create table
+        // Create table.
         $table = new flexible_table('flexquiz_student_questions');
-        $table->define_baseurl($PAGE->url);
+        $table->define_baseurl($this->page->url);
         $table->define_columns($columns);
         $table->define_headers($headers);
         $table->set_attribute('id', "fqsquestions");
         $table->setup();
-        // add table cell styling
+        // Add table cell styling.
         $table->column_style('percentage', 'text-align', 'center');
         $table->column_style('attempts', 'text-align', 'center');
-        // add empty line
+        // Add empty line.
         $table->column_style('question', 'color', '#000000');
-        $emptyline =  $includecca ? ['', '', '', ''] : ['', '', ''];
+        $emptyline = $includecca ? ['', '', '', ''] : ['', '', ''];
         $table->add_data($emptyline);
-        // add data
+        // Add data.
         foreach ($questiondata as $item) {
-            // get question name
+            // Get question name.
             if ($item->qtype !== 'random') {
                 $questionname = $item->questionname;
             } else {
@@ -384,21 +392,21 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                 $questionname = get_string('randomquestion', 'flexquiz') . ' ' . $cleanedname;
             }
 
-            // create row
-            $row = [$item->questionnum . ' ' . $OUTPUT->pix_icon('help', $questionname), $item->standing . '%'];
+            // Create row.
+            $row = [$item->questionnum . ' ' . $this->output->pix_icon('help', $questionname), $item->standing . '%'];
             $table->column_style('percentage', 'color', $item->percentagecolor);
             $status = '';
-            if($includecca) {
+            if ($includecca) {
                 $color = $item->correctattempts < $ccar ? 'rgba(160, 0, 0, 1.0)' : 'rgba(0, 0, 0, 1.0)';
                 $table->column_style('attempts', 'color', $color);
                 array_push($row, html_writer::tag('div', html_writer::tag('span', $item->correctattempts . '/' . $ccar)));
                 if ($item->correctattempts >= $ccar) {
-                    $status = $OUTPUT->pix_icon('i/checked', get_string('requirementsmet','flexquiz'));
+                    $status = $this->output->pix_icon('i/checked', get_string('requirementsmet', 'flexquiz'));
                 }
             } else if (floatval($item->percentage) >= 100) {
-                $status = $OUTPUT->pix_icon('i/checked', get_string('requirementsmet', 'flexquiz'));
+                $status = $this->output->pix_icon('i/checked', get_string('requirementsmet', 'flexquiz'));
             }
-            // add row to table
+            // Add row to table.
             array_push($row, $status);
             $table->add_data($row);
         }
@@ -407,16 +415,14 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     }
 
      /**
-     * Prints the questions overview table
-     * 
-     * @param stdClass[] $questiondata data to fill the table with
-     * @param int $ccar consecutive correct answers required setting from the flexquiz table
-     * @param bool $includecca true if cca info shall be included in the questions tables
-     */
+      * Prints the questions overview table.
+      *
+      * @param stdClass[] $questiondata data to fill the table with
+      * @param int $ccar consecutive correct answers required setting from the flexquiz table
+      * @param bool $includecca true if cca info shall be included in the questions tables
+      */
     private function print_students_table(array $studentdata, int $ccar, bool $includecca) {
-        global $PAGE;
-
-        // prepare table structure
+        // Prepare table structure.
         $columns = array('name', 'attemptstotal', 'attemptscycle', 'percentage', 'questions');
         $headers = array(
             get_string('headername', 'flexquiz'),
@@ -426,32 +432,38 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
             get_string('headerquestions', 'flexquiz')
         );
 
-        // create table
+        // Create table.
         $table = new flexible_table('flexquiz_teacher_students');
-        $table->define_baseurl($PAGE->url);
+        $table->define_baseurl($this->page->url);
         $table->define_columns($columns);
         $table->define_headers($headers);
         $table->set_attribute('id', 'fqteacherstudents');
         $table->setup();
-        // add table cell styling
+        // Add table cell styling.
         $table->column_style('name', 'min-width', '120px');
         $table->column_style('attemptstotal', 'text-align', 'center');
         $table->column_style('attemptscycle', 'text-align', 'center');
         $table->column_style('percentage', 'text-align', 'center');
-        // add empty line
+        // Add empty line.
         $table->column_style('percentage', 'color', '#000000');
         $table->add_data(['', '', '', '', '', '']);
-        // add data
+        // Add data.
 
         foreach ($studentdata as $student) {
-            // prepare questions subtable
+            // Prepare questions subtable.
             $questiondata = $student->questiondata;
             $questions = print_collapsible_region_start('', "questions_$student->id", 'details', '', true, true);
             ob_start();
             $this->print_questions_table($questiondata, $ccar, $includecca);
             $questions .= ob_get_contents();
             ob_end_clean();
-            $studentrow = [$student->name, $student->attemptstotal, $student->attemptscycle, $student->percentage . '%', $questions];
+            $studentrow = [
+                $student->name,
+                $student->attemptstotal,
+                $student->attemptscycle,
+                $student->percentage . '%',
+                $questions
+            ];
             $table->column_style('percentage', 'color', $student->percentagecolor);
             $table->add_data($studentrow);
         }

@@ -22,22 +22,22 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
- 
+
 defined('MOODLE_INTERNAL') || die();
- 
+
 if ($hassiteconfig) {
     if ($ADMIN->fulltree) {
         global $DB;
-        // add options
+        // Add options.
         $settings->add(new admin_setting_configcheckbox('mod_flexquiz/useai',
             get_string('useai', 'flexquiz'), get_string('useaidescription', 'flexquiz'), 0));
         $settings->add(new admin_setting_configtext('mod_flexquiz/aiurl',
             get_string('aiurlfield', 'flexquiz'), get_string('aiurldescription', 'flexquiz'), 'http://', PARAM_URL));
         $settings->add(new admin_setting_configtext('mod_flexquiz/aiapikey',
             get_string('aiapikeyfield', 'flexquiz'), get_string('aiapikeydescription', 'flexquiz'), ''));
-        
+
         $version = get_config('mod_flexquiz', 'version');
-        //add statistics
+        // Add statistics.
         if ($version >= 2020120904) {
             $sql = 'SELECT 0,
                     sum(COALESCE(fraction, 0)) AS fractionsum,
@@ -70,16 +70,16 @@ if ($hassiteconfig) {
                         get_string('statsvalue', 'flexquiz', $a)
                     )
                 );
-                    if (intval($roundupresult->cnt) !== 0) {
-                        $a->roundupavg = 100 * (floatval($roundupresult->roundupsum) / intval($roundupresult->cnt));
-                        $settings->add(
-                            new admin_setting_description(
-                                'mod_flexquiz/statisticsline3',
-                                '',
-                                get_string('roundupstatsvalue', 'flexquiz', $a)
-                            )
-                        );
-                    }
+                if (intval($roundupresult->cnt) !== 0) {
+                    $a->roundupavg = 100 * (floatval($roundupresult->roundupsum) / intval($roundupresult->cnt));
+                    $settings->add(
+                        new admin_setting_description(
+                            'mod_flexquiz/statisticsline3',
+                            '',
+                            get_string('roundupstatsvalue', 'flexquiz', $a)
+                        )
+                    );
+                }
             } else {
                 $settings->add(new admin_setting_description('mod_flexquiz/statistics', get_string('statistics', 'flexquiz'),
                     get_string('nostats', 'flexquiz')));

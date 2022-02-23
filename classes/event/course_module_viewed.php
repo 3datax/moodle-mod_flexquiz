@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * flexquiz module.
+ * The flexquiz course_module_viewed event
  *
  * @package mod_flexquiz
  * @copyright danube.ai
@@ -23,14 +23,33 @@
  *
  */
 
-require_once("../../config.php");
+namespace mod_flexquiz\event;
 
-$id = required_param('id', PARAM_INT); // Course ID.
+/**
+ * The flexquiz course module viewed event class.
+ *
+ * @property-read array $other {
+ * }
+ *
+ * @package mod_flexquiz
+ * @since Moodle 3.9
+ * @copyright danube.ai
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-$course = $DB->get_record('course', array('id' => $id));
+class course_module_viewed extends \core\event\course_module_viewed {
 
-// Ensure that the course specified is valid.
-if (!$course) {
-    throw new moodle_exception('Course ID is incorrect');
+    /**
+     * Set event properties.
+     */
+    protected function init() {
+        $this->data['crud'] = 'r';
+        $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
+        $this->data['objecttable'] = 'flexquiz';
+    }
+
+    public static function get_objectid_mapping() {
+        return array('db' => 'flexquiz', 'restore' => 'flexquiz');
+    }
 }
-require_login($course);
+

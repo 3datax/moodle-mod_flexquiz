@@ -35,9 +35,9 @@ $string['aiheader'] = 'AI Options';
 $string['ainotset'] = "The 'Use AI' setting needs to be enabled.";
 $string['aierror'] = 'AI not configured properly (This is done via plugin settings by an administrator.): {$a}';
 $string['ainourl'] = 'A URL must be specified.';
-$string['ainoapikey'] = 'An API key must be specified.'; 
+$string['ainoapikey'] = 'An API key must be specified.';
 $string['aiurlfield'] = 'API base URL';
-$string['aiurldescription'] ='Base URL of the API to send the requests to.';
+$string['aiurldescription'] = 'Base URL of the API to send the requests to.';
 $string['alertactive'] = 'Active!';
 $string['approximately'] = 'Consecutive correct answers required: About {$a} more correct answers needed this cycle to meet the requirement.';
 $string['availablefrom'] = 'Becomes available at {$a}.';
@@ -54,7 +54,7 @@ $string['customtimelimit'] = 'Quiz time limit';
 $string['customtimelimit_help'] = 'Sets the timelimit applied to each quiz created.';
 $string['cycleduration'] = 'Cycle duration';
 $string['cyclesheader'] = 'Cycles';
-$string['dateformat'] =  'F jS Y, H:i';
+$string['dateformat'] = 'F jS Y, H:i';
 $string['emptyquiz'] = 'Empty questions array returned from AI. No quiz created.';
 $string['enddate'] = 'Activity ends at';
 $string['enddate_help'] = 'No more quizzes are created for this Flex Quiz after the date given here.';
@@ -118,3 +118,22 @@ $string['useai'] = 'Use AI';
 $string['useaidescription'] = 'Use an AI to choose questions for child quizzes. Requires a connection to an AI to be present and correctly configured.';
 $string['usesai'] = 'Use AI';
 $string['usesai_help'] = "Requires a connection to an AI. Your 'flex quiz' plugin needs to be configured accordingly.";
+
+$string['privacy:metadata:flexquiz_student'] = 'Information about the student for one Flexquiz.';
+$string['privacy:metadata:flexquiz_student:instances'] = 'The number of child quizzes the student got for this Flexquiz.';
+$string['privacy:metadata:flexquiz_student:cyclenumber'] = 'The current cycle the student is in.';
+$string['privacy:metadata:flexquiz_student:instances_this_cycle'] = 'The number of child quizzes the student got for this Flexquiz during the current cycle.';
+$string['privacy:metadata:flexquiz_student:graded'] = 'Flag that tells if the student has been graded.';
+
+$string['privacy:metadata:flexquiz_grades_question'] = 'Information about the grades of a student for a Flexquiz question.';
+$string['privacy:metadata:flexquiz_grades_question:attempts'] = 'The number of attempts on the question.';
+$string['privacy:metadata:flexquiz_grades_question:rating'] = 'The student\'s rating for the question.';
+
+$string['privacy:metadata:flexquiz_stats'] = 'Global information about a student\'s performance over all Flexquizzes.';
+$string['privacy:metadata:flexquiz_stats:fraction'] = 'A value representing the user\'s overall progress/grade.';
+$string['privacy:metadata:flexquiz_stats:attempts'] = 'The number of attempts on all Flexquizzes.';
+
+$string['privacy:metadata:danube.education_data'] = 'The data sent to the danube.education API.';
+$string['privacy:metadata:danube.education_data:student'] = 'The moodle ID of the student.';
+$string['privacy:metadata:danube.education_data:cycle'] = 'The current cycle the student is in.';
+$string['privacy:metadata:danube.education_data:question_scores'] = 'Individual scores of question from child quizzes.';
