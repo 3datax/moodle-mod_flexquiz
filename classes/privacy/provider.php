@@ -531,6 +531,8 @@ class provider implements
      * @param int userid the user's id.
      * @param stdClass flexquiz flexquiz db object.
      * @param stdClass flexquizstudent the flexquiz student db object.
+     *
+     * @return bool true if successful
      */
     protected static function export_flexquiz_student(int $userid, \stdClass $flexquiz, \stdClass $flexquizstudent) {
         global $DB;
@@ -559,6 +561,8 @@ class provider implements
      *
      * @param int userid the user's id.
      * @param stdClass flexquiz flexquiz db object.
+     *
+     * @return bool true if successful
      */
     protected static function export_flexquiz_children(int $userid, \stdClass $flexquiz) {
         global $DB;
@@ -597,6 +601,8 @@ class provider implements
      *
      * @param int userid the user's id.
      * @param stdClass flexquiz flexquiz db object.
+     *
+     * @return bool true if successful
      */
     protected static function export_flexquiz_grades_question(int $userid, \stdClass $flexquiz) {
         global $DB;
@@ -638,6 +644,8 @@ class provider implements
      *
      * @param int userid the user's id.
      * @param stdClass flexquiz flexquiz db object.
+     *
+     * @return bool true if successful
      */
     protected static function export_flexquiz_stats(int $userid, \stdClass $flexquiz) {
         global $DB;

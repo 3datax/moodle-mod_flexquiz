@@ -1067,7 +1067,7 @@ class flexquiz_student_item {
      * @param stdClass[] $questions array of questions used in quiz attempt from which the data is taken.
      * @param int $time timestamp of the quiz attempt.
      * @param string $type of the request (e.g. 'initialize', 'continue')
-     * @param int[] $questionPool the pool of questions eligible.
+     * @param int[] $questionpool the pool of questions eligible.
      * @param bool $stashonfail true if the data should be stashed in the flexquiz_stash table in case
      * the request fails, false else.
      *

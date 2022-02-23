@@ -22,6 +22,13 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
+
+/**
+ * Upgrades database.
+ * 
+ * @param stdClass $oldversion old plugin version
+ * @return bool true if successful
+ */
 function xmldb_flexquiz_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();

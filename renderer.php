@@ -313,7 +313,7 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
     /**
      * Default view renderer for the flexquiz module.
      *
-     * @param object $flexQuiz object to render.
+     * @param object $flexquiz object to render.
      */
     protected function render_flexquiz_default_view(object $flexquiz) {
         $centerclass = array('class' => 'centered');
