@@ -35,5 +35,32 @@ function xmldb_flexquiz_upgrade($oldversion) {
 
     // Add db upgrades here.
 
+    if ($oldversion < 2022060800) {
+
+        // Define table flexquiz_cycle to be created.
+        $table = new xmldb_table('flexquiz_cycle');
+
+        // Adding fields to table flexquiz_cycle.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('flexquiz', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('cycle_number', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('grade_module', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table flexquiz_cycle.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('flexquiz', XMLDB_KEY_FOREIGN, ['flexquiz'], 'flexquiz', ['id']);
+
+        // Adding indexes to table flexquiz_cycle.
+        $table->add_index('flexquiz_cycle', XMLDB_INDEX_UNIQUE, ['flexquiz', 'cycle_number']);
+
+        // Conditionally launch create table for flexquiz_cycle.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Flexquiz savepoint reached.
+        upgrade_mod_savepoint(true, 2022060800, 'flexquiz');
+    }
+
     return true;
 }

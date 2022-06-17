@@ -32,6 +32,7 @@ use stdClass;
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/group/lib.php');
 require_once($CFG->dirroot . '/lib/gradelib.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 /**
  * A class encapsulating an flexquiz_student_item created by an flexquiz
@@ -818,49 +819,81 @@ class flexquiz_student_item {
      */
     private function modify_ratings_new_cycle($oldcycle, $cycle, $time) {
         global $DB;
+
+        // Fetch question grade records.
         $questionperformance = $DB->get_records_select(
             'flexquiz_grades_question',
             'flexquiz_student_item = ?',
             [$this->fqsdata->id],
             'question ASC',
-            'id, question, attempts, rating, ccas_this_cycle, roundupcomplete'
+            'id, question, attempts, rating, ccas_this_cycle, roundupcomplete, fraction'
         );
 
         $ccarinfo = $this->get_ccarinfo();
         $ccar = $ccarinfo->ccar;
         $isroundupcycle = $ccarinfo->isroundupcycle;
+        $multiplier = $cycle - $oldcycle;
+
         $result = array();
-        foreach ($questionperformance as $record) {
-            // Apply penalty to rating an ccas_this_cycle.
-            $multiplier = $cycle - $oldcycle;
-            $ccas = $record->ccas_this_cycle;
-            $record->ccas_this_cycle = !$isroundupcycle && $ccar && $ccar > 0 ? $ccas - $multiplier : 0;
-            if ($record->ccas_this_cycle > $ccar - $multiplier) {
-                $record->ccas_this_cycle = $ccar - $multiplier;
-            }
-            if ($record->ccas_this_cycle < 0) {
-                $record->ccas_this_cycle = 0;
-            }
-            if ($isroundupcycle) {
-                $record->rating = 0.0; // Roundupcycles are handled differently.
-            } else {
-                $record->rating = $record->rating - ($multiplier * self::NEW_CYCLE_PENALTY);
-                if ($record->rating < 0.0) {
-                    $record->rating = 0.0;
+        for ($i = 0; $i <= $multiplier; $i++) {
+            $fractionsum = 0.0;
+            foreach ($questionperformance as $record) {
+                if ($i == $multiplier) {
+                    // Apply penalty to rating and ccas_this_cycle.
+                    $ccas = $record->ccas_this_cycle;
+                    $record->ccas_this_cycle = !$isroundupcycle && $ccar && $ccar > 0 ? $ccas - $multiplier : 0;
+                    if ($record->ccas_this_cycle > $ccar - $multiplier) {
+                        $record->ccas_this_cycle = $ccar - $multiplier;
+                    }
+                    if ($record->ccas_this_cycle < 0) {
+                        $record->ccas_this_cycle = 0;
+                    }
+                    if ($isroundupcycle) {
+                        $record->rating = 0.0; // Roundupcycles are handled differently.
+                    } else {
+                        $record->rating = $record->rating - ($multiplier * self::NEW_CYCLE_PENALTY);
+                        if ($record->rating < 0.0) {
+                            $record->rating = 0.0;
+                        }
+                    }
+
+                    // Only reset fraction in non-AI mode. grading in AI mode is done by the AI.
+                    if (!$this->flexquiz->usesai) {
+                        $record->fraction = 0;
+                    }
+                    $record->timemodified = $time;
+                    $DB->update_record('flexquiz_grades_question', $record);
+                    $result[$record->question] = $record;
+                } else {
+                    if ($ccar > 0) {
+                        $ccas = $record->ccas_this_cycle - $i;
+                        if ($ccas < 0) {
+                            $ccas = 0;
+                        }
+                        $fractionsum += $ccas / $ccar;
+                    } else {
+                        // Add fraction only if question has been answered correctly with the cycle.
+                        // Only applies to the first cycle updated ($i == 0), not for skipped cycles.
+                        // Else, reset fraction to 0 (do nothing).
+                        if ($i == 0 && $record->rating >= 1.0) {
+                            $fractionsum += $record->fraction;
+                        }
+                    }
                 }
             }
 
-            // Only reset fraction in non-AI mode. grading in AI mode is done by the AI.
-            if (!$this->flexquiz->usesai) {
-                $record->fraction = 0;
+            $fraction = $fractionsum;
+            if (count($questionperformance) > 0) {
+                $fraction = 10 * ($fraction / count($questionperformance));
             }
-
-            $record->timemodified = $time;
-            $DB->update_record('flexquiz_grades_question', $record);
-            $result[$record->question] = $record;
-
-            $this->update_grade_data($result);
+            if ($i < $multiplier) {
+                if ($fraction < 0.0) {
+                    $fraction = 0.0;
+                }
+                $this->grade_cycle($oldcycle + $i, $fraction, $time);
+            }
         }
+        $this->update_grade_data($result);
     }
 
     /**
@@ -1231,5 +1264,171 @@ class flexquiz_student_item {
             $this->gradedata[$question->id]->timemodified = $time;
             $this->gradedata[$question->id]->fraction = $grade;
         }
+    }
+
+    /**
+     * Creates an assign activity for grading if necessary, and grades a cycle.
+     *
+     * @param int $cyclenumber from the flexquiz_cycles table
+     * @param int $fraction to be used for grading the cycle
+     * @param int $time at which the process has been triggered
+     */
+    private function grade_cycle($cyclenumber, $fraction, $time) {
+        global $DB;
+
+        $gradeitemdata = null;
+
+        // Create or fetch flexquiz_cycles row.
+        $cycledata = $DB->get_record(
+            'flexquiz_cycle',
+            array('flexquiz' => $this->flexquiz->id, 'cycle_number' => $cyclenumber)
+        );
+        $assignid = null;
+        if (!$cycledata) {
+            $cycledata = $this->create_cycledata($cyclenumber, $time);
+            $gradeitemdata = array('grademax' => 10.0);
+            $assignid = $cycledata->assignid;
+        }
+        $grademoduleinstance = $cycledata->grade_module;
+        if (!$assignid) {
+            $assign = $DB->get_record('assign', array('id' => $cycledata->grade_module), 'id');
+            $assignid = $assign->id;
+        }
+
+        // Create assign_grade row.
+        $grade = new stdClass();
+        $grade->assignment = $assignid;
+        $grade->userid = $this->studentid;
+        $grade->timecreated = $time;
+        $grade->timemodified = $time;
+        $grade->grade = $fraction;
+        // Grade is created automatically, so there is no userid.
+        $grade->grader = -1;
+
+        $DB->insert_record('assign_grades', $grade);
+
+        // Set submission to graded.
+        $submissionrecord = $DB->get_record(
+            'assign_submission',
+            array('assignment' => $assignid, 'userid' => $this->studentid)
+        );
+        if (!$submissionrecord) {
+            $DB->insert_record(
+                'assign_submission',
+                array('assignment' => $assignid, 'status' => 'submitted', 'userid' => $this->studentid)
+            );
+        } else {
+            $DB->update_record(
+                'assign_submission',
+                array('id' => $submissionrecord->id, 'status' => 'submitted', 'userid' => $this->studentid)
+            );
+        }
+
+        // Update grade.
+        grade_update(
+            'mod/assign',
+            $this->flexquiz->course,
+            'mod',
+            'assign',
+            $grademoduleinstance,
+            0,
+            array($this->fqsdata->student => array('rawgrade' => $fraction, 'userid' => $this->fqsdata->student)),
+            $gradeitemdata
+        );
+    }
+
+    /**
+     * Creates a row in the flexquiz_cycle table.
+     *
+     * @param int $cyclenumber from the flexquiz_cycle table
+     * @param int $time at which the process has been triggered
+     *
+     * @return stdClass containing the assignment id as grade_module and assignid properties
+     */
+    private function create_cycledata($cyclenumber, $time) {
+        global $DB;
+
+        // Fetch section data.
+        $sql = "SELECT cs.*
+            FROM {course_sections} cs
+            INNER JOIN {course_modules} cm ON cm.section=cs.id
+            INNER JOIN {modules} m ON m.id=cm.module
+            WHERE m.name=? AND cm.instance=?";
+
+        $params = array('flexquiz', $this->flexquiz->id);
+        $section = $DB->get_record_sql($sql, $params);
+
+        // Prepare assignment activity data.
+        $data = new stdClass();
+
+        $a = new stdClass();
+        $a->name = $this->flexquiz->name;
+        $a->number = strval($cyclenumber + 1);
+        $data->name = get_string('gradingactivityname', 'flexquiz', $a);
+        $data->timemodified = $time;
+        $data->timecreated = $time;
+        $data->course = $this->flexquiz->course;
+        $data->courseid = $this->flexquiz->course;
+        $data->intro = get_string(
+            'gradingactivitydescription',
+            'flexquiz',
+            get_string('gradingactivityname', 'flexquiz', $a)
+        );
+        $data->alwaysshowdescription = 1;
+        $data->grade = 10;
+
+        // Create activity and course module.
+        $assign = $DB->insert_record('assign', $data);
+
+        $module = $DB->get_record('modules', array('name' => 'assign'));
+        $moduleinfo = array(
+            'course' => $this->flexquiz->course,
+            'module' => $module->id,
+            'instance' => $assign,
+            'section' => $section->id,
+            'visible' => 0,
+            'visibleoncoursepage' => 0,
+            'groupmode' => 0,
+            'idnumber' => '',
+            'added' => time(),
+            'showdescription' => 1
+        );
+        $newmoduleid = $DB->insert_record('course_modules', $moduleinfo);
+
+        // Add activity to section.
+        course_add_cm_to_section($this->flexquiz->course, $newmoduleid, $section->section);
+
+        // Create flexquiz_cycle table entry.
+        $DB->insert_record(
+            'flexquiz_cycle',
+            array(
+                'flexquiz' => $this->flexquiz->id,
+                'cycle_number' => $cyclenumber,
+                'grade_module' => $assign
+            )
+        );
+
+        // Add plugin config rows. Needed to display 'graded' status.
+        $rowdata = array(
+            'enabled' => 1,
+            'maxfilesubmissions' => 1,
+            'maxsubmissionssizebytes' => 1,
+            'filetypeslist' => '',
+        );
+        foreach ($rowdata as $key => $value) {
+            $setting = new stdClass();
+            $setting->assignment = $assign;
+            $setting->subtype = 'assignsubmission';
+            $setting->plugin = 'file';
+            $setting->name = $key;
+            $setting->value = $value;
+
+            $DB->insert_record('assign_plugin_config', $setting);
+        }
+
+        $cycledata = new stdClass();
+        $cycledata->grade_module = $assign;
+        $cycledata->assignid = $assign;
+        return $cycledata;
     }
 }

@@ -74,6 +74,7 @@ function flexquiz_delete_instance($flexquizid) {
     global $DB, $CFG;
 
     require_once($CFG->dirroot . '/group/lib.php');
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
     // Get flexquiz record from db.
     $flexquiz = $DB->get_record('flexquiz', array('id' => $flexquizid));
@@ -133,13 +134,30 @@ function flexquiz_delete_instance($flexquizid) {
                 AND {course_format_options}.format='flexsections'
                 AND {course_format_options}.name='parent'
                 AND {course_format_options}.value > 0
-      ";
+                ";
 
             $params += array('courseid' => $flexquiz->course);
             $DB->execute($sql, $params);
         }
     }
 
+    $sql = "SELECT cm.*
+        FROM {course_modules} cm
+        INNER JOIN {modules} m ON cm.module=m.id
+        INNER JOIN {flexquiz_cycle} fc ON fc.grade_module=cm.instance
+        WHERE fc.flexquiz = :flexquizid
+        AND m.name = 'assign'
+        ";
+
+    $params = array('flexquizid' => $flexquizid);
+    $cms = $DB->get_records_sql($sql, $params);
+
+    foreach ($cms as $cm) {
+        $assign = new assign(context_module::instance($cm->id), $cm, false);
+        $assign->delete_instance();
+    }
+
+    $DB->delete_records('flexquiz_cycle', array('flexquiz' => $flexquizid));
     $DB->delete_records('flexquiz', array('id' => $flexquizid));
 
     $transaction->allow_commit();

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/flexquiz/db" VERSION="20210407" COMMENT="XMLDB file for Moodle mod/flexquiz"
+<XMLDB PATH="mod/flexquiz/db" VERSION="20220608" COMMENT="XMLDB file for Moodle mod/flexquiz"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -140,6 +140,22 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="stashid" TYPE="foreign" FIELDS="stashid" REFTABLE="flexquiz_stash" REFFIELDS="id"/>
       </KEYS>
+    </TABLE>
+    <TABLE NAME="flexquiz_cycle" COMMENT="cycle data for the flexquiz activity">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="flexquiz" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="id of the flexquiz this cycle is part of"/>
+        <FIELD NAME="cycle_number" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="grade_module" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="id of the module that contains grading for this cycle"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="flexquiz" TYPE="foreign" FIELDS="flexquiz" REFTABLE="flexquiz" REFFIELDS="id"/>
+        <KEY NAME="grade_module" TYPE="foreign-unique" FIELDS="grade_module" REFTABLE="course_modules" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="flexquiz_cycle" UNIQUE="true" FIELDS="flexquiz, cycle_number"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>
