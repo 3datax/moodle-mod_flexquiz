@@ -62,5 +62,35 @@ function xmldb_flexquiz_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2022060800, 'flexquiz');
     }
 
+    if ($oldversion < 2022070700) {
+
+        // Define field createcyclegrades to be added to flexquiz.
+        $table = new xmldb_table('flexquiz');
+        $field = new xmldb_field('createcyclegrades', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'sectionid');
+
+        // Conditionally launch add field createcyclegrades.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Flexquiz savepoint reached.
+        upgrade_mod_savepoint(true, 2022070700, 'flexquiz');
+    }
+
+    if ($oldversion < 2022070800) {
+
+        // Define field cyclegradesvisible to be added to flexquiz.
+        $table = new xmldb_table('flexquiz');
+        $field = new xmldb_field('cyclegradesvisible', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'createcyclegrades');
+
+        // Conditionally launch add field cyclegradesvisible.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Flexquiz savepoint reached.
+        upgrade_mod_savepoint(true, 2022070800, 'flexquiz');
+    }
+
     return true;
 }

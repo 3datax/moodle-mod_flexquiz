@@ -864,7 +864,7 @@ class flexquiz_student_item {
                     $record->timemodified = $time;
                     $DB->update_record('flexquiz_grades_question', $record);
                     $result[$record->question] = $record;
-                } else {
+                } else if ($this->flexquiz->createcyclegrades) {
                     if ($ccar > 0) {
                         $ccas = $record->ccas_this_cycle - $i;
                         if ($ccas < 0) {
@@ -882,15 +882,17 @@ class flexquiz_student_item {
                 }
             }
 
-            $fraction = $fractionsum;
-            if (count($questionperformance) > 0) {
-                $fraction = 10 * ($fraction / count($questionperformance));
-            }
-            if ($i < $multiplier) {
-                if ($fraction < 0.0) {
-                    $fraction = 0.0;
+            if ($this->flexquiz->createcyclegrades) {
+                $fraction = $fractionsum;
+                if (count($questionperformance) > 0) {
+                    $fraction = 10 * ($fraction / count($questionperformance));
                 }
-                $this->grade_cycle($oldcycle + $i, $fraction, $time);
+                if ($i < $multiplier) {
+                    if ($fraction < 0.0) {
+                        $fraction = 0.0;
+                    }
+                    $this->grade_cycle($oldcycle + $i, $fraction, $time);
+                }
             }
         }
         $this->update_grade_data($result);
@@ -1364,6 +1366,10 @@ class flexquiz_student_item {
         $a = new stdClass();
         $a->name = $this->flexquiz->name;
         $a->number = strval($cyclenumber + 1);
+        $cycleend = $this->flexquiz->startdate + (($cyclenumber + 1) * $this->flexquiz->cycleduration);
+        $dateformat = get_string('dateformat', 'flexquiz');
+        $a->date = date($dateformat, intval($cycleend));
+
         $data->name = get_string('gradingactivityname', 'flexquiz', $a);
         $data->timemodified = $time;
         $data->timecreated = $time;
@@ -1372,7 +1378,7 @@ class flexquiz_student_item {
         $data->intro = get_string(
             'gradingactivitydescription',
             'flexquiz',
-            get_string('gradingactivityname', 'flexquiz', $a)
+            get_string('gradingactivityshortname', 'flexquiz', $a)
         );
         $data->alwaysshowdescription = 1;
         $data->grade = 10;
@@ -1386,7 +1392,7 @@ class flexquiz_student_item {
             'module' => $module->id,
             'instance' => $assign,
             'section' => $section->id,
-            'visible' => 0,
+            'visible' => $this->flexquiz->cyclegradesvisible,
             'visibleoncoursepage' => 0,
             'groupmode' => 0,
             'idnumber' => '',

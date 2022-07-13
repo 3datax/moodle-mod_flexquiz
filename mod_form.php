@@ -124,6 +124,15 @@ class mod_flexquiz_mod_form extends moodleform_mod {
         $mform->addElement('selectyesno', 'roundupcycle', get_string('roundupcycle', 'flexquiz'));
         $mform->addHelpButton('roundupcycle', 'roundupcycle', 'flexquiz');
 
+        // Cycle grading.
+        $mform->addElement('header', 'cyclegradingheader', get_string('cyclegradingheader', 'flexquiz'));
+
+        $mform->addElement('selectyesno', 'createcyclegrades', get_string('createcyclegrades', 'flexquiz'));
+        $mform->addHelpButton('createcyclegrades', 'createcyclegrades', 'flexquiz');
+
+        $mform->addElement('selectyesno', 'cyclegradesvisible', get_string('cyclegradesvisible', 'flexquiz'));
+        $mform->addHelpButton('cyclegradesvisible', 'cyclegradesvisible', 'flexquiz');
+
         // Ai options.
         $mform->addElement('header', 'aiheader', get_string('aiheader', 'flexquiz'));
 

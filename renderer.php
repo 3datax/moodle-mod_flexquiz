@@ -68,16 +68,23 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
         switch($currenttab) {
             case 'general':
                 // Add start and end dates.
-                $out .= $this->output->container(
-                    html_writer::tag('div', get_string('startedat', 'flexquiz', $startdate), $centerclass)
-                );
+                $hasstarted = boolval($start <= time());
+                if ($hasstarted) {
+                    $out .= $this->output->container(
+                        html_writer::tag('div', get_string('startedat', 'flexquiz', $startdate), $centerclass)
+                    );
+                } else {
+                    $out .= $this->output->container(
+                        html_writer::tag('div', get_string('startsat', 'flexquiz', $startdate), $centerclass)
+                    );
+                }
 
                 if ($end) {
                     $out .= $this->output->container(
                         html_writer::tag('div', get_string('endsat', 'flexquiz', $enddate), $centerclass)
                     );
                 }
-                if ($data->flexquiz->cycleduration) {
+                if ($hasstarted && $data->flexquiz->cycleduration) {
                     if ($data->currentcycle) {
                         $out .= html_writer::tag(
                             'div',
@@ -248,22 +255,29 @@ class mod_flexquiz_renderer extends plugin_renderer_base {
                 }
 
                 if ($data->flexquiz->cycleduration) {
-                    if ($data->currentcycle) {
+                    if ($data->currentcycle >= 1) {
                         $out .= html_writer::tag(
                             'div',
                             get_string('currentcycle', 'flexquiz', $data->currentcycle),
                             $centerclass
                         );
-                    }
-                    if ($data->nextcyclestart) {
+                        if ($data->nextcyclestart) {
+                            $dateformat = get_string('dateformat', 'flexquiz');
+                            $out .= html_writer::tag(
+                                'div',
+                                get_string('nextcyclestart', 'flexquiz', date($dateformat, intval($data->nextcyclestart))),
+                                $centerclass
+                            );
+                        } else {
+                            $out .= html_writer::tag('div', get_string('lastcycle', 'flexquiz'), $centerclass);
+                        }
+                    } else {
                         $dateformat = get_string('dateformat', 'flexquiz');
                         $out .= html_writer::tag(
                             'div',
-                            get_string('nextcyclestart', 'flexquiz', date($dateformat, intval($data->nextcyclestart))),
+                            get_string('startsat', 'flexquiz', date($dateformat, intval($data->flexquiz->startdate))),
                             $centerclass
                         );
-                    } else {
-                        $out .= html_writer::tag('div', get_string('lastcycle', 'flexquiz'), $centerclass);
                     }
                 }
 

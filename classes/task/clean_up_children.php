@@ -85,12 +85,23 @@ class clean_up_children extends \core\task\scheduled_task {
         $params = array('graded' => '0');
         $fqs = $DB->get_records_sql($sql, $params);
 
+        $cycleinfo = null;
+        $currentcycle = null;
+        if (!empty($fqs)) {
+            // Check if end reached or cycle transition necessary.
+            $firstelement = $fqs[array_key_first($fqs)];
+            $cycleinfo = \mod_flexquiz\childcreation\flexquiz::get_cycle_info($firstelement, $time);
+            $currentcycle = intval($cycleinfo->cyclenumber);
+
+            // Cyclenumber < 0 means the activity has not started yet. Do nothing then.
+            if ($currentcycle < 0) {
+                return;
+            }
+        }
+
         // Create a new child quiz if necessary.
         foreach ($fqs as $item) {
-            // Check if end reached or cycle transition necessary.
             $cyclenumber = intval($item->cyclenumber);
-            $cycleinfo = \mod_flexquiz\childcreation\flexquiz::get_cycle_info($item, $time);
-            $currentcycle = intval($cycleinfo->cyclenumber);
             $hasended = $cycleinfo->hasended;
             $isnewcycle = boolval($currentcycle > $cyclenumber);
 

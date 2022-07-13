@@ -113,35 +113,36 @@ class flexquiz_teacher_view implements \renderable {
                 $transaction = $DB->start_delegated_transaction();
                 $cycleinfo = \mod_flexquiz\childcreation\flexquiz::get_cycle_info($flexquiz, $time);
                 $currentcycle = intval($cycleinfo->cyclenumber);
-                $hasended = $cycleinfo->hasended;
 
+                $hasstarted = boolval($currentcycle >= 0);
+                $hasended = $cycleinfo->hasended;
                 if ($transition = boolval(intval($currentcycle) > intval($cyclenumber)) && !$record->graded) {
                     $fqsitem->trigger_transition($currentcycle, $time);
-                    if (!$hasended) {
-                        if ($hasactivechild) {
-                            if ($flexquiz->usesai) {
-                                $fqsitem->query_questions_from_ai(
-                                    'DummyId',
-                                    $currentcycle,
-                                    $flexquiz->parentquiz,
-                                    [],
-                                    $time,
-                                    'continue'
-                                );
-                            }
-                        } else {
-                            $fqsitem->trigger_child_creation($time);
+                }
+                if (!$hasended) {
+                    if ($hasactivechild) {
+                        if ($flexquiz->usesai) {
+                            $fqsitem->query_questions_from_ai(
+                                'DummyId',
+                                $currentcycle,
+                                $flexquiz->parentquiz,
+                                [],
+                                $time,
+                                'continue'
+                            );
                         }
-                    } else if ($flexquiz->usesai) {
-                        $fqsitem->query_questions_from_ai(
-                            'DummyId',
-                            $currentcycle,
-                            $flexquiz->parentquiz,
-                            [],
-                            $time,
-                            'continue'
-                        );
+                    } else if ($hasstarted) {
+                        $fqsitem->trigger_child_creation($time);
                     }
+                } else if ($hasstarted && $flexquiz->usesai) {
+                    $fqsitem->query_questions_from_ai(
+                        'DummyId',
+                        $currentcycle,
+                        $flexquiz->parentquiz,
+                        [],
+                        $time,
+                        'continue'
+                    );
                 }
                 if ($transition || (!$record->graded && $hasended)) {
                     $fqsitem->update_sum_grade($time, $hasended);
@@ -172,13 +173,15 @@ class flexquiz_teacher_view implements \renderable {
         }
 
         $this->studentrecords = $studentrecords;
-        // Compute start of next cycle.
-        if ($flexquiz->cycleduration > 0) {
-            if (!$fqsitem->cycles_are_overflowing($currentcycle)) {
-                $this->currentcycle = $currentcycle + 1;
-            }
-            if (!$fqsitem->cycles_are_overflowing($currentcycle + 1)) {
-                $this->nextcyclestart = intval($flexquiz->startdate) + intval(($cyclenumber + 1) * $flexquiz->cycleduration);
+        if ($currentcycle >= 0) {
+            // Compute start of next cycle.
+            if ($flexquiz->cycleduration > 0) {
+                if (!$fqsitem->cycles_are_overflowing($currentcycle)) {
+                    $this->currentcycle = $currentcycle + 1;
+                }
+                if (!$fqsitem->cycles_are_overflowing($currentcycle + 1)) {
+                    $this->nextcyclestart = intval($flexquiz->startdate) + intval(($cyclenumber + 1) * $flexquiz->cycleduration);
+                }
             }
         }
     }

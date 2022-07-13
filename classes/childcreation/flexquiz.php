@@ -163,18 +163,27 @@ class flexquiz {
             'flexquiz_student',
             array('student' => $studentid, 'flexquiz' => $this->flexquiz->id)
         );
+
         if (!$fqsitemid) {
+            $startingcycle = $cycle > -1 ? $cycle : 0;
             $fqsitemid = $DB->insert_record('flexquiz_student', array(
                 'flexquiz' => $this->flexquiz->id,
                 'student' => $studentid,
                 'groupid' => 0,
                 'instances' => 0,
                 'instances_this_cycle' => 0,
-                'cyclenumber' => intval($cycle)
+                'cyclenumber' => intval($startingcycle)
             ));
         }
 
         $fqsitem = flexquiz_student_item::create($fqsitemid);
+
+        // Negative cycle numbers indicate that the flexquiz has not started yet.
+        // Thus, child creation is skipped.
+        if ($cycle < 0) {
+            return;
+        }
+
         $questions = array();
 
         // If ai is used, get new questions from said ai.

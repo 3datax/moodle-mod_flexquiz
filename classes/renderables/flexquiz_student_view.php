@@ -101,36 +101,38 @@ class flexquiz_student_view implements \renderable {
             $transaction = $DB->start_delegated_transaction();
             $cycleinfo = \mod_flexquiz\childcreation\flexquiz::get_cycle_info($flexquiz, $time);
             $currentcycle = intval($cycleinfo->cyclenumber);
+
+            $hasstarted = boolval($currentcycle >= 0);
             $hasended = $cycleinfo->hasended;
 
+            $select = array('flexquiz_student_item' => $fqsdata->id, 'active' => 1);
             if ($transition = boolval(intval($currentcycle) > intval($cyclenumber)) && !$fqsdata->graded) {
-                $select = array('flexquiz_student_item' => $fqsdata->id, 'active' => 1);
                 $fqsitem->trigger_transition($currentcycle, $time);
-                if (!$hasended) {
-                    if ($DB->record_exists('flexquiz_children', $select)) {
-                        if ($flexquiz->usesai) {
-                            $fqsitem->query_questions_from_ai(
-                                'DummyId',
-                                $currentcycle,
-                                $flexquiz->parentquiz,
-                                [],
-                                $time,
-                                'continue'
-                            );
-                        }
-                    } else {
-                        $fqsitem->trigger_child_creation($time);
+            }
+            if (!$hasended) {
+                if ($DB->record_exists('flexquiz_children', $select)) {
+                    if ($flexquiz->usesai) {
+                        $fqsitem->query_questions_from_ai(
+                            'DummyId',
+                            $currentcycle,
+                            $flexquiz->parentquiz,
+                            [],
+                            $time,
+                            'continue'
+                        );
                     }
-                } else if ($flexquiz->usesai) {
-                    $fqsitem->query_questions_from_ai(
-                        'DummyId',
-                        $currentcycle,
-                        $flexquiz->parentquiz,
-                        [],
-                        $time,
-                        'continue'
-                    );
+                } else if ($hasstarted) {
+                    $fqsitem->trigger_child_creation($time);
                 }
+            } else if ($hasstarted && $flexquiz->usesai) {
+                $fqsitem->query_questions_from_ai(
+                    'DummyId',
+                    $currentcycle,
+                    $flexquiz->parentquiz,
+                    [],
+                    $time,
+                    'continue'
+                );
             }
             if ($transition || (!$fqsdata->graded && $hasended)) {
                 $fqsitem->update_sum_grade($time, $hasended);
@@ -159,13 +161,15 @@ class flexquiz_student_view implements \renderable {
             $this->quizdata = array_values($quizdata)[0];
         }
 
-        // Compute start of next cycle.
-        if ($flexquiz->cycleduration > 0) {
-            if (!$fqsitem->cycles_are_overflowing($currentcycle)) {
-                $this->currentcycle = $currentcycle + 1;
-            }
-            if (!$fqsitem->cycles_are_overflowing($currentcycle + 1)) {
-                $this->nextcyclestart = intval($flexquiz->startdate) + intval(($currentcycle + 1) * $flexquiz->cycleduration);
+        if ($currentcycle >= 0) {
+            // Compute start of next cycle.
+            if ($flexquiz->cycleduration > 0) {
+                if (!$fqsitem->cycles_are_overflowing($currentcycle)) {
+                    $this->currentcycle = $currentcycle + 1;
+                }
+                if (!$fqsitem->cycles_are_overflowing($currentcycle + 1)) {
+                    $this->nextcyclestart = intval($flexquiz->startdate) + intval(($currentcycle + 1) * $flexquiz->cycleduration);
+                }
             }
         }
     }
