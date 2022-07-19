@@ -92,5 +92,20 @@ function xmldb_flexquiz_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2022070800, 'flexquiz');
     }
 
+    if ($oldversion < 2022071800) {
+
+        // Define field gradecategoryid to be added to flexquiz.
+        $table = new xmldb_table('flexquiz');
+        $field = new xmldb_field('gradecategoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'cyclegradesvisible');
+
+        // Conditionally launch add field gradecategoryid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Flexquiz savepoint reached.
+        upgrade_mod_savepoint(true, 2022071800, 'flexquiz');
+    }
+
     return true;
 }

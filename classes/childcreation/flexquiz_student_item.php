@@ -1288,7 +1288,7 @@ class flexquiz_student_item {
         $assignid = null;
         if (!$cycledata) {
             $cycledata = $this->create_cycledata($cyclenumber, $time);
-            $gradeitemdata = array('grademax' => 10.0);
+            $gradeitemdata = array('grademax' => 10.0, 'itemname' => $cycledata->name);
             $assignid = $cycledata->assignid;
         }
         $grademoduleinstance = $cycledata->grade_module;
@@ -1337,6 +1337,21 @@ class flexquiz_student_item {
             array($this->fqsdata->student => array('rawgrade' => $fraction, 'userid' => $this->fqsdata->student)),
             $gradeitemdata
         );
+
+        $gradecategoryid = $this->flexquiz->gradecategoryid;
+        if ($gradecategoryid != null) {
+            if ($DB->record_exists('grade_categories', array('id' => $gradecategoryid))) {
+                $gradeitem = $DB->get_record('grade_items', array(
+                    'itemtype' => 'mod',
+                    'itemmodule' => 'assign',
+                    'iteminstance' => $assignid,
+                ));
+                $gradeitemupdatedata = new stdClass();
+                $gradeitemupdatedata->id = $gradeitem->id;
+                $gradeitemupdatedata->categoryid = $gradecategoryid;
+                $DB->update_record('grade_items', $gradeitemupdatedata);
+            }
+        }
     }
 
     /**
@@ -1435,6 +1450,7 @@ class flexquiz_student_item {
         $cycledata = new stdClass();
         $cycledata->grade_module = $assign;
         $cycledata->assignid = $assign;
+        $cycledata->name = $data->name;
         return $cycledata;
     }
 }

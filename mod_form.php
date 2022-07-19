@@ -130,6 +130,33 @@ class mod_flexquiz_mod_form extends moodleform_mod {
         $mform->addElement('selectyesno', 'createcyclegrades', get_string('createcyclegrades', 'flexquiz'));
         $mform->addHelpButton('createcyclegrades', 'createcyclegrades', 'flexquiz');
 
+        $sql = 'SELECT gc.id, gc.fullname, gc.depth
+                FROM {grade_categories} gc
+                WHERE gc.courseid = ?
+                ORDER BY gc.depth ASC, gc.fullname ASC';
+
+        $params = [$COURSE->id];
+        $gradecategories = $DB->get_records_sql($sql, $params);
+        $categorylist = array();
+        foreach ($gradecategories as $category) {
+            $catname = $category->fullname;
+            if (intval($category->depth) == 1) {
+                $catname = get_string('rootcategory', 'flexquiz');
+            }
+            $categorylist[$category->id] = $catname;
+        }
+
+        $mform->addElement(
+            'select',
+            'gradecategoryid',
+            get_string('gradecategoryid', 'flexquiz'),
+            $categorylist,
+            array('noselectionstring' => '')
+        );
+
+        $mform->setType('gradecategoryid', PARAM_RAW);
+        $mform->addHelpButton('gradecategoryid', 'gradecategoryid', 'flexquiz');
+
         $mform->addElement('selectyesno', 'cyclegradesvisible', get_string('cyclegradesvisible', 'flexquiz'));
         $mform->addHelpButton('cyclegradesvisible', 'cyclegradesvisible', 'flexquiz');
 
